@@ -1,4 +1,6 @@
-﻿namespace OrderService.Domain
+﻿using OrderService.Domain.Exceptions;
+
+namespace OrderService.Domain
 {
     public readonly record struct OrderId(Guid Value)
     {
@@ -48,7 +50,7 @@
         {
             if (left.Currency != right.Currency)
             {
-                throw new InvalidOperationException(
+                throw new DomainException(
                     $"Cannot operate on different currencies: '{left.Currency}' and '{right.Currency}'.");
             }
         }

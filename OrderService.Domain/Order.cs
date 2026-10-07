@@ -1,6 +1,7 @@
 ﻿using OrderService.Domain.Entities;
 using OrderService.Domain.Enums;
 using OrderService.Domain.Events;
+using OrderService.Domain.Exceptions;
 
 namespace OrderService.Domain
 {
@@ -18,7 +19,9 @@ namespace OrderService.Domain
         public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
         public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-        public Money TotalAmount => new Money(_items.Sum(item => item.TotalPrice.Amount));
+        public Money TotalAmount => _items.Count == 0
+            ? Money.Zero()
+            : _items.Select(i => i.TotalPrice).Aggregate((a, b) => a + b);
 
         private Order() { }
 
@@ -45,7 +48,7 @@ namespace OrderService.Domain
         private void EnsureStatus(OrderStatus expected, string action)
         {
             if (Status != expected)
-                throw new InvalidOperationException($"Cannot {action} order in state '{Status}'.");
+                throw new DomainException($"Cannot {action} order in state '{Status}'.");
         }
     }
 }
