@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OrderService.Application.Behaviour;
+using OrderService.Application.Behaviors;
 using System.Reflection;
 
 namespace OrderService.Application;
