@@ -45,7 +45,7 @@ jobs:
         run: docker build -t ordering-api:scan .
 
       - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@PASTE_FULL_COMMIT_SHA_HERE   # v0.35.0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1   # v0.35.0
         with:
           image-ref: ordering-api:scan
           severity: HIGH,CRITICAL
