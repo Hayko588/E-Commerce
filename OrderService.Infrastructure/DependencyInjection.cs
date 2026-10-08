@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OrderService.Application;
+using OrderService.Infrastructure.Catalog;
 using OrderService.Infrastructure.Persistence;
 using OrderService.Infrastructure.Repositories;
 
@@ -28,7 +29,7 @@ namespace OrderService.Infrastructure
 
             services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<OrderDbContext>());
             services.AddScoped<IOrderRepository, OrderRepository>();
-
+            services.AddSingleton<IProductCatalogClient, StubProductCatalogClient>();
             return services;
         }
     }
