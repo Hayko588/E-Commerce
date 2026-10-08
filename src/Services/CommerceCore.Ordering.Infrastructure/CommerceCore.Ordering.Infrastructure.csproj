@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CommerceCore.Ordering.Application\CommerceCore.Ordering.Application.csproj" />
+    <ProjectReference Include="..\CommerceCore.Ordering.Domain\CommerceCore.Ordering.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

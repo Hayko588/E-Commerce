@@ -2,24 +2,21 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Shared build settings must be present at restore time
 COPY ["Directory.Build.props", "./"]
 
 # Copy csproj files first to maximize Docker layer caching
-COPY ["OrderService.Api/OrderService.Api.csproj", "OrderService.Api/"]
-COPY ["OrderService.Application/OrderService.Application.csproj", "OrderService.Application/"]
-COPY ["OrderService.Domain/OrderService.Domain.csproj", "OrderService.Domain/"]
-COPY ["OrderService.Infrastructure/OrderService.Infrastructure.csproj", "OrderService.Infrastructure/"]
+COPY ["src/Services/CommerceCore.Ordering.Api/CommerceCore.Ordering.Api.csproj", "src/Services/CommerceCore.Ordering.Api/"]
+COPY ["src/Services/CommerceCore.Ordering.Application/CommerceCore.Ordering.Application.csproj", "src/Services/CommerceCore.Ordering.Application/"]
+COPY ["src/Services/CommerceCore.Ordering.Domain/CommerceCore.Ordering.Domain.csproj", "src/Services/CommerceCore.Ordering.Domain/"]
+COPY ["src/Services/CommerceCore.Ordering.Infrastructure/CommerceCore.Ordering.Infrastructure.csproj", "src/Services/CommerceCore.Ordering.Infrastructure/"]
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet restore "./OrderService.Api/OrderService.Api.csproj" --disable-parallel
+    dotnet restore "src/Services/CommerceCore.Ordering.Api/CommerceCore.Ordering.Api.csproj" --disable-parallel
 
-# Copy remaining source code
-COPY . .
-WORKDIR "/src/OrderService.Api"
+COPY src/ src/
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet publish "OrderService.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+    dotnet publish "src/Services/CommerceCore.Ordering.Api/CommerceCore.Ordering.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Stage 2: Runtime Image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
@@ -29,4 +26,4 @@ EXPOSE 8080
 USER app
 
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "OrderService.Api.dll"]
+ENTRYPOINT ["dotnet", "CommerceCore.Ordering.Api.dll"]
