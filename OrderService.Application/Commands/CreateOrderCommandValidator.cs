@@ -11,7 +11,10 @@ namespace OrderService.Application.Commands
                 .NotEmpty().WithMessage("CustomerId is required.");
 
             RuleFor(x => x.Items)
-                .NotEmpty().WithMessage("Order must contain at least one item.");
+                .Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Order must contain at least one item.")
+                .Must(items => items.Select(i => i.ProductId).Distinct().Count() == items.Count)
+                    .WithMessage("Each product may appear only once.");
 
             RuleForEach(x => x.Items).ChildRules(item =>
             {
@@ -19,10 +22,7 @@ namespace OrderService.Application.Commands
                     .NotEmpty().WithMessage("ProductId is required.");
 
                 item.RuleFor(i => i.Quantity)
-                    .GreaterThan(0).WithMessage("Quantity must be greater than 0.");
-
-                item.RuleFor(i => i.UnitPrice)
-                    .GreaterThan(0).WithMessage("UnitPrice must be greater than 0.");
+                    .InclusiveBetween(1, 100).WithMessage("Quantity must be between 1 and 100.");
             });
         }
     }
