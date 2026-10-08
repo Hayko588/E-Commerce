@@ -1,4 +1,5 @@
-﻿using OrderService.Api.Middleware;
+﻿using Microsoft.EntityFrameworkCore;
+using OrderService.Api.Middleware;
 using OrderService.Application;
 using OrderService.Infrastructure;
 using OrderService.Infrastructure.Persistence;
@@ -36,10 +37,11 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
+if (app.Environment.IsDevelopment())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
-    await dbContext.Database.EnsureCreatedAsync();
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+    await db.Database.MigrateAsync();
 }
 
 app.Run();

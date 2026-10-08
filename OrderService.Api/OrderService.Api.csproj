@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <UserSecretsId>a2acf53a-e45c-41f0-8de5-661ec0bbfca4</UserSecretsId>
   </PropertyGroup>
 
 
@@ -29,14 +30,8 @@
     <None Remove="..\.dockerignore" />
   </ItemGroup>
 
-
   <ItemGroup>
-    <None Remove="..\.dockerignore" />
-  </ItemGroup>
-
-
-  <ItemGroup>
-    <None Remove="..\.dockerignore" />
+    <Content Include="Properties\launchSettings.json" />
   </ItemGroup>
 
 </Project>

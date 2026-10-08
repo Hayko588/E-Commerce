@@ -1,63 +1,32 @@
-﻿version: '3.8'
-
-services:
-  # -------------------------------------------------------------------
-  # SQL Server for Order Service (OrdersDb)
-  # -------------------------------------------------------------------
+﻿services:
   sqlserver-orders:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sqlserver-orders
-    user: root
     environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=YourSecurePassword123!
-      - MSSQL_PID=Developer
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}
+      MSSQL_PID: Developer
     ports:
       - "1433:1433"
     volumes:
-      - sqlserver_orders_data:/var/opt/mssql/data
+      - sqlserver_orders_data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P YourSecurePassword123! -C -Q 'SELECT 1' || exit 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 20s
     networks:
       - commerce-network
 
-  # -------------------------------------------------------------------
-  # SQL Server for Inventory Service (InventoryDb)
-  # -------------------------------------------------------------------
-  sqlserver-inventory:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sqlserver-inventory
-    user: root
-    environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=YourSecurePassword123!
-      - MSSQL_PID=Developer
-    ports:
-      - "1434:1433"
-    volumes:
-      - sqlserver_inventory_data:/var/opt/mssql/data
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P YourSecurePassword123! -C -Q 'SELECT 1' || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - commerce-network
-
-  # -------------------------------------------------------------------
-  # Order Service Web API
-  # -------------------------------------------------------------------
   order-api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: order-api
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=sqlserver-orders;Database=OrdersDb;User Id=sa;Password=YourSecurePassword123!;TrustServerCertificate=True;
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver-orders;Database=OrdersDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
     ports:
       - "5001:8080"
     depends_on:
@@ -72,4 +41,3 @@ networks:
 
 volumes:
   sqlserver_orders_data:
-  sqlserver_inventory_data:
