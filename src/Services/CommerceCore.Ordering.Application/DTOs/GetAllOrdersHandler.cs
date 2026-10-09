@@ -8,11 +8,6 @@ namespace CommerceCore.Ordering.Application.DTOs
         public async Task<List<OrderResponse>> Handle(GetAllOrders request, CancellationToken cancellationToken)
         {
             var orders = await orderRepository.GetAllAsync(cancellationToken);
-            if (orders == null)
-            {
-                return null;
-            }
-
             return orders.Select(order => new OrderResponse(
                     order.Id.Value,
                     order.CustomerId,
