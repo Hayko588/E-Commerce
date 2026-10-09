@@ -58,4 +58,15 @@ public class OrderApiTests(ApiFixture api) : IClassFixture<ApiFixture>
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task Catalog_outage_returns_503_with_retry_after()
+    {
+        var client = api.CreateClientWithCatalog<UnavailableProductCatalogClient>();
+
+        var response = await client.PostAsJsonAsync("/api/v1/orders", Body(Keyboard, 1));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
+        response.Headers.RetryAfter.ShouldNotBeNull();
+    }
 }

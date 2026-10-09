@@ -29,7 +29,7 @@ namespace CommerceCore.Ordering.Infrastructure
 
             services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<OrderDbContext>());
             services.AddScoped<IOrderRepository, OrderRepository>();
-            services.AddSingleton<IProductCatalogClient, StubProductCatalogClient>();
+            services.AddCatalogClient(configuration);
             return services;
         }
     }

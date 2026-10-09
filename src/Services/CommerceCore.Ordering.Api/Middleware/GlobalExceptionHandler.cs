@@ -1,4 +1,5 @@
-﻿using CommerceCore.Ordering.Domain.Exceptions;
+﻿using CommerceCore.Ordering.Application;
+using CommerceCore.Ordering.Domain.Exceptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -36,6 +37,13 @@ public sealed class GlobalExceptionHandler(
                 Detail = ex.Message
             },
 
+            CatalogUnavailableException => new ProblemDetails
+            {
+                Status = StatusCodes.Status503ServiceUnavailable,
+                Title = "Service unavailable",
+                Detail = "The product catalog is temporarily unavailable. Please retry shortly."
+            },
+
             _ => new ProblemDetails
             {
                 Status = StatusCodes.Status500InternalServerError,
@@ -50,6 +58,9 @@ public sealed class GlobalExceptionHandler(
             logger.LogWarning("Request rejected: {Title} - {Detail}", problem.Title, problem.Detail);
 
         httpContext.Response.StatusCode = problem.Status!.Value;
+
+        if (problem.Status == StatusCodes.Status503ServiceUnavailable)
+            httpContext.Response.Headers.RetryAfter = "5";
 
         return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
         {

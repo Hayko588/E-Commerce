@@ -1,10 +1,15 @@
-﻿using CommerceCore.Ordering.Infrastructure.Persistence;
+﻿using CommerceCore.Ordering.Application;
+using CommerceCore.Ordering.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Shouldly;
 using Testcontainers.MsSql;
+using Xunit;
 
 namespace CommerceCore.Ordering.IntegrationTests;
 
@@ -27,14 +32,31 @@ public sealed class ApiFixture : IAsyncLifetime
             InitialCatalog = "OrdersTestDb"
         }.ConnectionString;
 
-        // Program.cs reads the connection string while the host is being built,
-        // so an environment variable is the most reliable way to override it.
         Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", connectionString);
 
         _factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder => builder.UseEnvironment("Development"));
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Development");
+                builder.ConfigureTestServices(services => Replace<FakeProductCatalogClient>(services));
+            });
 
-        Client = _factory.CreateClient();   // starts the app and applies migrations\
+        Client = _factory.CreateClient();   // startup applies migrations
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+        (await db.Database.GetAppliedMigrationsAsync())
+            .ShouldNotBeEmpty("No EF migrations were applied. Are the migration files (including *.Designer.cs) present?");
+    }
+
+    // A client whose host uses a different IProductCatalogClient implementation.
+    public HttpClient CreateClientWithCatalog<T>() where T : class, IProductCatalogClient =>
+        _factory!.WithWebHostBuilder(b => b.ConfigureTestServices(services => Replace<T>(services))).CreateClient();
+
+    private static void Replace<T>(IServiceCollection services) where T : class, IProductCatalogClient
+    {
+        services.RemoveAll<IProductCatalogClient>();
+        services.AddSingleton<IProductCatalogClient, T>();
     }
 
     public async Task DisposeAsync()

@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Services\CommerceCore.Ordering.Application\CommerceCore.Ordering.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\CommerceCore.Ordering.Infrastructure\CommerceCore.Ordering.Infrastructure.csproj" />
   </ItemGroup>
   
 

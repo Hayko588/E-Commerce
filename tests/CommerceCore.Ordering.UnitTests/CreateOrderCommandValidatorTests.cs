@@ -66,4 +66,14 @@ public class CreateOrderCommandValidatorTests
 
         result.IsValid.ShouldBeTrue();
     }
+
+    [Fact]
+    public void More_than_50_products_is_invalid()
+    {
+        var items = Enumerable.Range(0, 51).Select(_ => new CreateOrderItemRequest(Guid.NewGuid(), 1)).ToArray();
+
+        var result = _validator.Validate(Command(Guid.NewGuid(), items));
+
+        result.Errors.ShouldContain(e => e.PropertyName == "Items" && e.ErrorMessage.Contains("at most 50"));
+    }
 }

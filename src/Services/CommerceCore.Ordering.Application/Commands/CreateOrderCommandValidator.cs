@@ -13,7 +13,9 @@ namespace CommerceCore.Ordering.Application.Commands
                 .Cascade(CascadeMode.Stop)
                 .NotEmpty().WithMessage("Order must contain at least one item.")
                 .Must(items => items.Select(i => i.ProductId).Distinct().Count() == items.Count)
-                    .WithMessage("Each product may appear only once.");
+                    .WithMessage("Each product may appear only once.")
+                .Must(items => items.Count <= 50)
+                    .WithMessage("An order may contain at most 50 different products.");
 
             RuleForEach(x => x.Items).ChildRules(item =>
             {
