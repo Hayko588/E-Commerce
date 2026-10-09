@@ -42,7 +42,7 @@
   order-api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: src/Services/CommerceCore.Ordering.Api/Dockerfile
     container_name: order-api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -51,6 +51,22 @@
       - "5001:8080"
     depends_on:
       sqlserver-orders:
+        condition: service_healthy
+    networks:
+      - commerce-network
+
+  catalog-api:
+    build:
+      context: .
+      dockerfile: src/Services/CommerceCore.Catalog.Api/Dockerfile
+    container_name: catalog-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver-catalog;Database=CatalogDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+    ports:
+      - "5002:8080"
+    depends_on:
+      sqlserver-catalog:
         condition: service_healthy
     networks:
       - commerce-network

@@ -38,16 +38,24 @@ jobs:
   image-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ordering-api
+            dockerfile: src/Services/CommerceCore.Ordering.Api/Dockerfile
+          - name: catalog-api
+            dockerfile: src/Services/CommerceCore.Catalog.Api/Dockerfile
     steps:
       - uses: actions/checkout@v4
 
       - name: Build image
-        run: docker build -t ordering-api:scan .
+        run: docker build -f ${{ matrix.dockerfile }} -t ${{ matrix.name }}:scan .
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1   # v0.35.0
         with:
-          image-ref: ordering-api:scan
+          image-ref: ${{ matrix.name }}:scan
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: "1"

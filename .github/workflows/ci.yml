@@ -47,6 +47,16 @@ jobs:
           dotnet test tests/CommerceCore.Ordering.IntegrationTests -c Release --no-build
           --logger "trx;LogFileName=integration.trx" --results-directory TestResults
 
+      - name: Catalog unit tests
+        run: >
+          dotnet test tests/CommerceCore.Catalog.UnitTests -c Release --no-build
+          --logger "trx;LogFileName=catalog-unit.trx" --results-directory TestResults
+
+      - name: Catalog integration tests
+        run: >
+          dotnet test tests/CommerceCore.Catalog.IntegrationTests -c Release --no-build
+          --logger "trx;LogFileName=catalog-integration.trx" --results-directory TestResults
+      
       - name: Check for vulnerable packages
         shell: bash
         run: |
@@ -82,13 +92,21 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ordering-api
+            dockerfile: src/Services/CommerceCore.Ordering.Api/Dockerfile
+          - name: catalog-api
+            dockerfile: src/Services/CommerceCore.Catalog.Api/Dockerfile
     env:
       PUSH: ${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'master') }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Compute lower-case image name
-        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/ordering-api" >> "$GITHUB_ENV"
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/${{ matrix.name }}" >> "$GITHUB_ENV"
 
       - uses: docker/setup-buildx-action@v3
 
@@ -112,9 +130,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile
+          file: ${{ matrix.dockerfile }}
           push: ${{ env.PUSH == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
