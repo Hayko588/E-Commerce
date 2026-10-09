@@ -6,14 +6,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Testcontainers.MsSql;
-using Xunit;
 
 namespace CommerceCore.Catalog.IntegrationTests;
 
 public sealed class CatalogApiFixture : IAsyncLifetime
 {
-    private readonly MsSqlContainer _sql = new MsSqlBuilder()
-        .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+    private readonly MsSqlContainer _sql =
+        new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
         .Build();
 
     private WebApplicationFactory<Program>? _factory;
