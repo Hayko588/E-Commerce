@@ -36,6 +36,22 @@ jobs:
       - name: Build
         run: dotnet build ${{ env.SOLUTION }} -c Release --no-restore
 
+      - name: Check EF migrations match the models
+        shell: bash
+        env:
+          # Only needed so the app can be constructed; no database connection is made.
+          ConnectionStrings__DefaultConnection: "Server=ci;Database=ci;User Id=ci;Password=ci;TrustServerCertificate=True"
+          RabbitMq__Password: ci
+        run: |
+          dotnet tool restore
+          for svc in Ordering Catalog; do
+            dotnet ef migrations has-pending-model-changes \
+              --project src/Services/CommerceCore.$svc.Infrastructure \
+              --startup-project src/Services/CommerceCore.$svc.Api \
+              --configuration Release --no-build \
+              -- --environment Development
+          done
+
       - name: Unit tests
         run: >
           dotnet test tests/CommerceCore.Ordering.UnitTests -c Release --no-build
