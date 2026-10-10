@@ -50,7 +50,7 @@ public static class MessagingRegistration
 
             x.UsingRabbitMq((context, cfg) =>
             {
-                cfg.Host(Required("Host"), rabbit["VirtualHost"] ?? "/", h =>
+                cfg.Host(Required("Host"), ushort.Parse(rabbit["Port"] ?? "5672"), rabbit["VirtualHost"] ?? "/", h =>
                 {
                     h.Username(Required("Username"));
                     h.Password(Required("Password"));

@@ -22,7 +22,7 @@ env:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
 
@@ -77,6 +77,11 @@ jobs:
         run: >
           dotnet test tests/CommerceCore.Gateway.IntegrationTests -c Release --no-build
           --logger "trx;LogFileName=gateway.trx" --results-directory TestResults
+
+      - name: End-to-end tests (real SQL Server and RabbitMQ)
+        run: >
+          dotnet test tests/CommerceCore.EndToEnd.Tests -c Release --no-build
+          --logger "trx;LogFileName=e2e.trx" --results-directory TestResults
 
       - name: Check for vulnerable packages
         shell: bash

@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Testcontainers.RabbitMq" Version="4.16.0" />
+  </ItemGroup>
+
+</Project>

@@ -32,17 +32,17 @@ public static class MessagingRegistration
 
             x.UsingRabbitMq((context, cfg) =>
             {
-                cfg.Host(Required("Host"), rabbit["VirtualHost"] ?? "/", h =>
+                cfg.Host(Required("Host"), ushort.Parse(rabbit["Port"] ?? "5672"), rabbit["VirtualHost"] ?? "/", h =>
                 {
                     h.Username(Required("Username"));
                     h.Password(Required("Password"));
                 });
 
                 cfg.UseMessageRetry(r => r.Exponential(
-                    retryLimit: 5,
-                    minInterval: TimeSpan.FromSeconds(1),
-                    maxInterval: TimeSpan.FromSeconds(30),
-                    intervalDelta: TimeSpan.FromSeconds(2)));
+                    retryLimit: 10,
+                    minInterval: TimeSpan.FromMilliseconds(100),
+                    maxInterval: TimeSpan.FromSeconds(10),
+                    intervalDelta: TimeSpan.FromMilliseconds(500)));
 
                 cfg.ConfigureEndpoints(context);
             });

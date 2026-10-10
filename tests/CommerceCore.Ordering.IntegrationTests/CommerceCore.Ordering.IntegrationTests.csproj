@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Services\CommerceCore.Ordering.Api\CommerceCore.Ordering.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\CommerceCore.Ordering.Application\CommerceCore.Ordering.Application.csproj" />
+    <ProjectReference Include="..\CommerceCore.TestSupport\CommerceCore.TestSupport.csproj" />
   </ItemGroup>
 
 
