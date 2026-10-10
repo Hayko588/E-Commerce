@@ -7,6 +7,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Shouldly;
 using Testcontainers.MsSql;
 
@@ -32,11 +33,15 @@ public sealed class ApiFixture : IAsyncLifetime
         }.ConnectionString;
 
         Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", connectionString);
+        Environment.SetEnvironmentVariable("RabbitMq__Host", "localhost");
+        Environment.SetEnvironmentVariable("RabbitMq__Username", "test");
+        Environment.SetEnvironmentVariable("RabbitMq__Password", "test");
 
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
                 builder.UseEnvironment("Development");
+                builder.ConfigureLogging(logging => { logging.ClearProviders(); logging.AddConsole(); });
                 builder.ConfigureTestServices(services => Replace<FakeProductCatalogClient>(services));
             });
 

@@ -50,5 +50,21 @@ namespace CommerceCore.Ordering.Domain
             if (Status != expected)
                 throw new DomainException($"Cannot {action} order in state '{Status}'.");
         }
+
+        public void MarkStockReserved()
+        {
+            EnsureStatus(OrderStatus.Pending, "reserve stock for");
+            Status = OrderStatus.StockReserved;
+            UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        public void Cancel()
+        {
+            if (Status is OrderStatus.Completed or OrderStatus.Cancelled)
+                throw new DomainException($"Cannot cancel an order that is {Status}.");
+
+            Status = OrderStatus.Cancelled;
+            UpdatedAtUtc = DateTime.UtcNow;
+        }
     }
 }

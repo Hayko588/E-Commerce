@@ -1,6 +1,7 @@
 using CommerceCore.Catalog.Api.Middleware;
 using CommerceCore.Catalog.Application;
 using CommerceCore.Catalog.Infrastructure;
+using CommerceCore.Catalog.Infrastructure.Messaging;
 using CommerceCore.Catalog.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
@@ -13,14 +14,15 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services
     .AddCatalogApplication()
-    .AddCatalogInfrastructure(connectionString);
+    .AddCatalogInfrastructure(connectionString)
+    .AddCatalogMessaging(builder.Configuration);
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddHealthChecks().AddDbContextCheck<CatalogDbContext>();
+builder.Services.AddHealthChecks().AddDbContextCheck<CatalogDbContext>("db", tags: ["db"]);
 
 var app = builder.Build();
 
@@ -33,8 +35,8 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 
 app.MapControllers();
-app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });   // process is up
-app.MapHealthChecks("/health/ready");                                                    // database reachable
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("db") });
 
 if (app.Environment.IsDevelopment())
 {

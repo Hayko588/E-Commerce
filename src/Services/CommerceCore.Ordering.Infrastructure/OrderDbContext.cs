@@ -1,6 +1,7 @@
 ﻿using CommerceCore.Ordering.Application;
 using CommerceCore.Ordering.Domain;
 using CommerceCore.Ordering.Domain.Entities;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 namespace CommerceCore.Ordering.Infrastructure.Persistence
@@ -14,12 +15,12 @@ namespace CommerceCore.Ordering.Infrastructure.Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrderDbContext).Assembly);
-            base.OnModelCreating(modelBuilder);
-        }
 
-        public async override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            return await base.SaveChangesAsync(cancellationToken);
+            modelBuilder.AddInboxStateEntity();
+            modelBuilder.AddOutboxMessageEntity();
+            modelBuilder.AddOutboxStateEntity();
+
+            base.OnModelCreating(modelBuilder);
         }
     }
 }

@@ -1,11 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="MassTransit" Version="8.5.10" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.5.10" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\CommerceCore.Contracts\CommerceCore.Contracts.csproj" />
     <ProjectReference Include="..\CommerceCore.Ordering.Application\CommerceCore.Ordering.Application.csproj" />
     <ProjectReference Include="..\CommerceCore.Ordering.Domain\CommerceCore.Ordering.Domain.csproj" />
   </ItemGroup>

@@ -7,6 +7,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\CommerceCore.Contracts\CommerceCore.Contracts.csproj" />
     <ProjectReference Include="..\CommerceCore.Ordering.Domain\CommerceCore.Ordering.Domain.csproj" />
   </ItemGroup>
 

@@ -1,4 +1,5 @@
 ﻿using CommerceCore.Catalog.Application;
+using CommerceCore.Catalog.Application.Stock;
 using CommerceCore.Catalog.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<CatalogDbContext>());
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IProductReadService, ProductReadService>();
+        services.AddScoped<IStockRepository, StockRepository>();
 
         return services;
     }

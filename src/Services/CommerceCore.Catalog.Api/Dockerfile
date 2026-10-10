@@ -11,8 +11,9 @@ COPY ["src/Services/CommerceCore.Catalog.Api/CommerceCore.Catalog.Api.csproj", "
 COPY ["src/Services/CommerceCore.Catalog.Application/CommerceCore.Catalog.Application.csproj", "src/Services/CommerceCore.Catalog.Application/"]
 COPY ["src/Services/CommerceCore.Catalog.Domain/CommerceCore.Catalog.Domain.csproj", "src/Services/CommerceCore.Catalog.Domain/"]
 COPY ["src/Services/CommerceCore.Catalog.Infrastructure/CommerceCore.Catalog.Infrastructure.csproj", "src/Services/CommerceCore.Catalog.Infrastructure/"]
+COPY ["src/BuildingBlocks/CommerceCore.Contracts/CommerceCore.Contracts.csproj", "src/BuildingBlocks/CommerceCore.Contracts/"]
 
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet restore "src/Services/CommerceCore.Catalog.Api/CommerceCore.Catalog.Api.csproj" --disable-parallel
 
 # Only this service's source, so changes to another service don't invalidate this build
@@ -20,8 +21,9 @@ COPY src/Services/CommerceCore.Catalog.Api/ src/Services/CommerceCore.Catalog.Ap
 COPY src/Services/CommerceCore.Catalog.Application/ src/Services/CommerceCore.Catalog.Application/
 COPY src/Services/CommerceCore.Catalog.Domain/ src/Services/CommerceCore.Catalog.Domain/
 COPY src/Services/CommerceCore.Catalog.Infrastructure/ src/Services/CommerceCore.Catalog.Infrastructure/
+COPY src/BuildingBlocks/CommerceCore.Contracts/ src/BuildingBlocks/CommerceCore.Contracts/
 
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet publish "src/Services/CommerceCore.Catalog.Api/CommerceCore.Catalog.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Stage 2: Runtime Image

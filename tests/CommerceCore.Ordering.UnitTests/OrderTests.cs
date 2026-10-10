@@ -4,7 +4,6 @@ using CommerceCore.Ordering.Domain.Enums;
 using CommerceCore.Ordering.Domain.Events;
 using CommerceCore.Ordering.Domain.Exceptions;
 using Shouldly;
-using Xunit;
 
 namespace CommerceCore.Ordering.UnitTests;
 
@@ -48,4 +47,35 @@ public class OrderTests
     public void Mixed_currencies_are_rejected() =>
         Should.Throw<DomainException>(() =>
             new Order(Guid.NewGuid(), Item(10m), Item(10m, currency: "EUR")));
+
+    [Fact]
+    public void Reserved_stock_moves_a_pending_order_forward()
+    {
+        var order = new Order(Guid.NewGuid(), Item(10m));
+
+        order.MarkStockReserved();
+
+        order.Status.ShouldBe(OrderStatus.StockReserved);
+        order.UpdatedAtUtc.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void Stock_cannot_be_reserved_twice()
+    {
+        var order = new Order(Guid.NewGuid(), Item(10m));
+        order.MarkStockReserved();
+
+        Should.Throw<DomainException>(order.MarkStockReserved);
+    }
+
+    [Fact]
+    public void A_pending_order_can_be_cancelled_but_not_twice()
+    {
+        var order = new Order(Guid.NewGuid(), Item(10m));
+
+        order.Cancel();
+
+        order.Status.ShouldBe(OrderStatus.Cancelled);
+        Should.Throw<DomainException>(order.Cancel);
+    }
 }

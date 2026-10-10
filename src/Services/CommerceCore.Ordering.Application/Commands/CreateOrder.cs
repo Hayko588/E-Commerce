@@ -1,4 +1,5 @@
-﻿using CommerceCore.Ordering.Application.DTOs;
+﻿using CommerceCore.Contracts;
+using CommerceCore.Ordering.Application.DTOs;
 using CommerceCore.Ordering.Domain;
 using CommerceCore.Ordering.Domain.Entities;
 using CommerceCore.Ordering.Domain.Exceptions;
@@ -14,6 +15,7 @@ namespace CommerceCore.Ordering.Application.Commands
     public class CreateOrderCommandHandler(
         IOrderRepository orderRepository,
         IProductCatalogClient catalog,
+        IMessagePublisher publisher,
         IUnitOfWork unitOfWork) : IRequestHandler<CreateOrderCommand, Guid>
     {
         public async Task<Guid> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
@@ -32,6 +34,13 @@ namespace CommerceCore.Ordering.Application.Commands
             var order = new Order(request.CustomerId, items);
 
             await orderRepository.AddAsync(order, cancellationToken);
+
+            // Written to the outbox table, committed in the same transaction as the order.
+            await publisher.PublishAsync(new OrderSubmitted(
+                order.Id.Value,
+                order.CustomerId,
+                [.. request.Items.Select(i => new OrderItemLine(i.ProductId, i.Quantity))]), cancellationToken);
+
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
             return order.Id.Value;

@@ -1,4 +1,5 @@
 using CommerceCore.Catalog.Application.Behaviors;
+using CommerceCore.Catalog.Application.Stock;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +17,7 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
         services.AddValidatorsFromAssembly(assembly);
+        services.AddScoped<StockReservationService>();
 
         return services;
     }

@@ -9,16 +9,18 @@ COPY ["src/Services/CommerceCore.Ordering.Api/CommerceCore.Ordering.Api.csproj",
 COPY ["src/Services/CommerceCore.Ordering.Application/CommerceCore.Ordering.Application.csproj", "src/Services/CommerceCore.Ordering.Application/"]
 COPY ["src/Services/CommerceCore.Ordering.Domain/CommerceCore.Ordering.Domain.csproj", "src/Services/CommerceCore.Ordering.Domain/"]
 COPY ["src/Services/CommerceCore.Ordering.Infrastructure/CommerceCore.Ordering.Infrastructure.csproj", "src/Services/CommerceCore.Ordering.Infrastructure/"]
+COPY ["src/BuildingBlocks/CommerceCore.Contracts/CommerceCore.Contracts.csproj", "src/BuildingBlocks/CommerceCore.Contracts/"]
 
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet restore "src/Services/CommerceCore.Ordering.Api/CommerceCore.Ordering.Api.csproj" --disable-parallel
 
 COPY src/Services/CommerceCore.Ordering.Api/ src/Services/CommerceCore.Ordering.Api/
 COPY src/Services/CommerceCore.Ordering.Application/ src/Services/CommerceCore.Ordering.Application/
 COPY src/Services/CommerceCore.Ordering.Domain/ src/Services/CommerceCore.Ordering.Domain/
 COPY src/Services/CommerceCore.Ordering.Infrastructure/ src/Services/CommerceCore.Ordering.Infrastructure/
+COPY src/BuildingBlocks/CommerceCore.Contracts/ src/BuildingBlocks/CommerceCore.Contracts/
 
-RUN --mount=type=cache,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet publish "src/Services/CommerceCore.Ordering.Api/CommerceCore.Ordering.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Stage 2: Runtime Image

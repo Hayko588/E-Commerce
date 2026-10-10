@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Shouldly;
 using Testcontainers.MsSql;
 
@@ -29,9 +30,16 @@ public sealed class CatalogApiFixture : IAsyncLifetime
         }.ConnectionString;
 
         Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", connectionString);
+        Environment.SetEnvironmentVariable("RabbitMq__Host", "localhost");
+        Environment.SetEnvironmentVariable("RabbitMq__Username", "test");
+        Environment.SetEnvironmentVariable("RabbitMq__Password", "test");
 
         _factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder => builder.UseEnvironment("Development"));
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Development");
+                builder.ConfigureLogging(logging => { logging.ClearProviders(); logging.AddConsole(); });
+            });
 
         Client = _factory.CreateClient();   // startup applies migrations and seeds the sample products
 

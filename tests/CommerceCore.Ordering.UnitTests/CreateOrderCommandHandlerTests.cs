@@ -1,4 +1,5 @@
-﻿using CommerceCore.Ordering.Application;
+﻿using CommerceCore.Contracts;
+using CommerceCore.Ordering.Application;
 using CommerceCore.Ordering.Application.Commands;
 using CommerceCore.Ordering.Application.DTOs;
 using CommerceCore.Ordering.Domain;
@@ -13,9 +14,10 @@ public class CreateOrderCommandHandlerTests
     private readonly IOrderRepository _orders = Substitute.For<IOrderRepository>();
     private readonly IProductCatalogClient _catalog = Substitute.For<IProductCatalogClient>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly IMessagePublisher _publisher = Substitute.For<IMessagePublisher>();
     private readonly CreateOrderCommandHandler _handler;
 
-    public CreateOrderCommandHandlerTests() => _handler = new(_orders, _catalog, _unitOfWork);
+    public CreateOrderCommandHandlerTests() => _handler = new(_orders, _catalog, _publisher, _unitOfWork);
 
     private void CatalogReturns(params (Guid Id, decimal Price)[] prices)
     {
@@ -38,6 +40,9 @@ public class CreateOrderCommandHandlerTests
             Arg.Is<Order>(o => o.TotalAmount.Amount == 99.98m),
             Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        await _publisher.Received(1).PublishAsync(
+            Arg.Is<OrderSubmitted>(m => m.OrderId == orderId && m.Items.Count == 1 && m.Items[0].Quantity == 2),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -52,5 +57,6 @@ public class CreateOrderCommandHandlerTests
         ex.Message.ShouldContain(unknown.ToString());
         await _orders.DidNotReceive().AddAsync(Arg.Any<Order>(), Arg.Any<CancellationToken>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+        await _publisher.DidNotReceiveWithAnyArgs().PublishAsync<OrderSubmitted>(default!, default);
     }
 }
