@@ -50,6 +50,7 @@
       Services__Catalog__BaseUrl: http://catalog-api:8080
     ports:
       - "5001:8080"
+      - "127.0.0.1:15001:8080"
     depends_on:
       sqlserver-orders:
         condition: service_healthy
@@ -66,9 +67,25 @@
       ConnectionStrings__DefaultConnection: "Server=sqlserver-catalog;Database=CatalogDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
     ports:
       - "5002:8080"
+      - "127.0.0.1:15002:8080"
     depends_on:
       sqlserver-catalog:
         condition: service_healthy
+    networks:
+      - commerce-network
+
+  gateway:
+    build:
+      context: .
+      dockerfile: src/Gateway/CommerceCore.Gateway/Dockerfile
+    container_name: gateway
+    restart: on-failure
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ReverseProxy__Clusters__catalog__Destinations__primary__Address: http://catalog-api:8080/
+      ReverseProxy__Clusters__ordering__Destinations__primary__Address: http://order-api:8080/
+    ports:
+      - "8080:8080"
     networks:
       - commerce-network
 

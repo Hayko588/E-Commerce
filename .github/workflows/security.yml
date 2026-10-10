@@ -46,6 +46,8 @@ jobs:
             dockerfile: src/Services/CommerceCore.Ordering.Api/Dockerfile
           - name: catalog-api
             dockerfile: src/Services/CommerceCore.Catalog.Api/Dockerfile
+          - name: gateway
+            dockerfile: src/Gateway/CommerceCore.Gateway/Dockerfile
     steps:
       - uses: actions/checkout@v4
 

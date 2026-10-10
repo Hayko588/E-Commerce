@@ -69,4 +69,14 @@ public class OrderApiTests(ApiFixture api) : IClassFixture<ApiFixture>
         response.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
         response.Headers.RetryAfter.ShouldNotBeNull();
     }
+
+    [Theory]
+    [InlineData("/health/live")]
+    [InlineData("/health/ready")]
+    public async Task Health_endpoints_report_healthy(string path)
+    {
+        var response = await api.Client.GetAsync(path);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 }
