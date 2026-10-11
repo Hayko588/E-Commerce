@@ -80,15 +80,15 @@ public sealed class OrderStateMachine : MassTransitStateMachine<OrderState>
                     ctx.Saga.CorrelationId, ctx.Saga.Total, ctx.Saga.Currency, ctx.Saga.PaymentToken!))
                 .Then(ctx => ctx.Saga.PaymentToken = null)
                 .TransitionTo(Charging),
-            When(StockWasRejected)
+             When(StockWasRejected)
                 .Then(ctx => ctx.Saga.FailureReason = Truncate(ctx.Message.Reason, 256))
-                .Publish(ctx => new OrderRejected(ctx.Saga.CorrelationId, ctx.Message.Reason))
+                .Publish(ctx => new OrderRejected(ctx.Saga.CorrelationId, ctx.Saga.CustomerId, ctx.Message.Reason))
                 .TransitionTo(Rejected),
             Ignore(Submitted));
 
         During(Charging,
             When(PaymentWasSuccessful)
-                .Publish(ctx => new OrderConfirmed(ctx.Saga.CorrelationId))
+                .Publish(ctx => new OrderConfirmed(ctx.Saga.CorrelationId, ctx.Saga.CustomerId))
                 .TransitionTo(Confirmed),
             When(PaymentWasDeclined)
                 .Then(ctx => ctx.Saga.FailureReason = Truncate($"Payment failed: {ctx.Message.Reason}", 256))
@@ -100,7 +100,7 @@ public sealed class OrderStateMachine : MassTransitStateMachine<OrderState>
         During(Compensating,
             When(StockWasReleased)
                 .Publish(ctx => new OrderRejected(
-                    ctx.Saga.CorrelationId, ctx.Saga.FailureReason ?? "Payment failed."))
+                    ctx.Saga.CorrelationId, ctx.Saga.CustomerId, ctx.Saga.FailureReason ?? "Payment failed."))
                 .TransitionTo(Rejected),
             Ignore(Submitted),
             Ignore(StockWasReserved),

@@ -97,6 +97,7 @@
       ReverseProxy__Clusters__catalog__Destinations__primary__Address: http://catalog-api:8080/
       ReverseProxy__Clusters__ordering__Destinations__primary__Address: http://order-api:8080/
       ReverseProxy__Clusters__payments__Destinations__primary__Address: http://payments-api:8080/
+      ReverseProxy__Clusters__notifications__Destinations__primary__Address: http://notifications-api:8080/
     ports:
       - "8080:8080"
     networks:
@@ -121,6 +122,29 @@
       start_period: 20s
     networks:
       - commerce-network
+
+  notifications-api:
+    build:
+      context: .
+      dockerfile: src/Services/CommerceCore.Notifications.Api/Dockerfile
+    container_name: notifications-api
+    restart: on-failure
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=NotificationsDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-commerce}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:15004:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - commerce-network
+
 networks:
   commerce-network:
     driver: bridge

@@ -1,15 +1,15 @@
-﻿using System.Net;
-using System.Net.Http.Json;
-using CommerceCore.Catalog.Domain;
+﻿using CommerceCore.Catalog.Domain;
 using CommerceCore.Catalog.Infrastructure.Persistence;
 using CommerceCore.Contracts;
+using CommerceCore.Notifications.Infrastructure.Persistence;
 using CommerceCore.Payments.Infrastructure.Persistence;
 using CommerceCore.TestSupport;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using Xunit;
+using System.Net;
+using System.Net.Http.Json;
 
 namespace CommerceCore.EndToEnd.Tests;
 
@@ -20,6 +20,70 @@ public class PlatformTests(PlatformFixture platform) : IClassFixture<PlatformFix
 
     private sealed record OrderView(string Status);
     private sealed record PaymentView(string Status, string? FailureReason);
+    private sealed record NotificationView(string Kind, string Recipient, string Subject, string Body);
+
+    [Fact]
+    public async Task A_paid_order_sends_a_confirmation_to_the_customer()
+    {
+        var product = await CreateProductAsync(stock: 10);
+        var customerId = Guid.NewGuid();
+
+        var orderId = await PlaceOrderAsync(product, quantity: 1, customerId: customerId);
+
+        (await WaitForOutcomeAsync(orderId)).ShouldBe(Paid);
+        var sent = await WaitForNotificationsAsync(orderId);
+
+        var notification = sent.ShouldHaveSingleItem();
+        notification.Kind.ShouldBe("OrderConfirmed");
+        notification.Recipient.ShouldBe($"customer-{customerId:N}@example.test");
+    }
+
+    [Fact]
+    public async Task A_cancelled_order_sends_a_rejection_with_the_reason()
+    {
+        var product = await CreateProductAsync(stock: 1);
+
+        var orderId = await PlaceOrderAsync(product, quantity: 5);
+
+        (await WaitForOutcomeAsync(orderId)).ShouldBe(Cancelled);
+        var notification = (await WaitForNotificationsAsync(orderId)).ShouldHaveSingleItem();
+
+        notification.Kind.ShouldBe("OrderRejected");
+        notification.Body.ShouldContain("Insufficient stock");
+    }
+
+    [Fact]
+    public async Task A_redelivered_confirmation_notifies_only_once()
+    {
+        var orderId = Guid.NewGuid();
+        var message = new OrderConfirmed(orderId, Guid.NewGuid());
+
+        // Sent straight to the notification queue, so Ordering (which does not know this order) is not involved.
+        var bus = platform.NotificationsServices.GetRequiredService<IBus>();
+        var endpoint = await bus.GetSendEndpoint(new Uri("queue:order-confirmed-notification"));
+        await endpoint.Send(message);
+        await endpoint.Send(message);
+
+        await WaitForNotificationsAsync(orderId);
+        await Task.Delay(TimeSpan.FromSeconds(3));
+
+        (await NotificationCountAsync(orderId)).ShouldBe(1);
+    }
+
+    private Task<List<NotificationView>> WaitForNotificationsAsync(Guid orderId) =>
+        Eventually.ReadAsync(
+            async () => await platform.NotificationsApi.GetFromJsonAsync<List<NotificationView>>(
+                $"/api/v1/notifications?orderId={orderId}") ?? [],
+            list => list.Count >= 1,
+            TimeSpan.FromSeconds(60), $"a notification for order {orderId}");
+
+    private async Task<int> NotificationCountAsync(Guid orderId)
+    {
+        await using var scope = platform.NotificationsServices.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<NotificationsDbContext>();
+
+        return await db.Notifications.CountAsync(n => n.OrderId == orderId);
+    }
 
     [Fact]
     public async Task Order_is_paid_and_stock_is_reserved()
@@ -216,11 +280,12 @@ public class PlatformTests(PlatformFixture platform) : IClassFixture<PlatformFix
         return await response.Content.ReadFromJsonAsync<PaymentView>();
     }
 
-    private async Task<Guid> PlaceOrderAsync(Guid productId, int quantity, string paymentToken = "tok_ok")
+    private async Task<Guid> PlaceOrderAsync(
+           Guid productId, int quantity, string paymentToken = "tok_ok", Guid? customerId = null)
     {
         var response = await platform.Orders.PostAsJsonAsync("/api/v1/orders", new
         {
-            customerId = Guid.NewGuid(),
+            customerId = customerId ?? Guid.NewGuid(),
             paymentToken,
             items = new[] { new { productId, quantity } }
         });

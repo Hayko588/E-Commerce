@@ -25,5 +25,5 @@ public sealed record PaymentFailed(Guid OrderId, string Reason);
 
 // saga -> Ordering (updates the Order aggregate)
 public sealed record OrderStockReserved(Guid OrderId);
-public sealed record OrderConfirmed(Guid OrderId);
-public sealed record OrderRejected(Guid OrderId, string Reason);
+public sealed record OrderConfirmed(Guid OrderId, Guid CustomerId);
+public sealed record OrderRejected(Guid OrderId, Guid CustomerId, string Reason);

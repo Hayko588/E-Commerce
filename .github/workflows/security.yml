@@ -50,6 +50,8 @@ jobs:
             dockerfile: src/Gateway/CommerceCore.Gateway/Dockerfile
           - name: payments-api
             dockerfile: src/Services/CommerceCore.Payments.Api/Dockerfile
+          - name: notifications-api
+            dockerfile: src/Services/CommerceCore.Notifications.Api/Dockerfile
     steps:
       - uses: actions/checkout@v4
 

@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\Services\CommerceCore.Ordering.Api\CommerceCore.Ordering.Api.csproj" />
     <ProjectReference Include="..\CommerceCore.TestSupport\CommerceCore.TestSupport.csproj" />
     <ProjectReference Include="..\..\src\Services\CommerceCore.Payments.Api\CommerceCore.Payments.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\CommerceCore.Notifications.Api\CommerceCore.Notifications.Api.csproj" />
   </ItemGroup>
 
 </Project>

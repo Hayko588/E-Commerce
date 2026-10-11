@@ -77,7 +77,12 @@ jobs:
         run: >
           dotnet test tests/CommerceCore.Payments.UnitTests -c Release --no-build
           --logger "trx;LogFileName=payments-unit.trx" --results-directory TestResults
-          
+        
+      - name: Notifications unit tests
+        run: >
+          dotnet test tests/CommerceCore.Notifications.UnitTests -c Release --no-build
+          --logger "trx;LogFileName=notifications-unit.trx" --results-directory TestResults
+
       - name: Gateway tests
         run: >
           dotnet test tests/CommerceCore.Gateway.IntegrationTests -c Release --no-build
@@ -135,6 +140,8 @@ jobs:
             dockerfile: src/Gateway/CommerceCore.Gateway/Dockerfile
           - name: payments-api
             dockerfile: src/Services/CommerceCore.Payments.Api/Dockerfile
+          - name: notifications-api
+            dockerfile: src/Services/CommerceCore.Notifications.Api/Dockerfile
     env:
       PUSH: ${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'master') }}
     steps:

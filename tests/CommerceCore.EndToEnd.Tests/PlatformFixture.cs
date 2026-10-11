@@ -1,4 +1,5 @@
 ﻿using CommerceCore.Catalog.Api.Controllers;
+using CommerceCore.Notifications.Api.Controllers;
 using CommerceCore.Ordering.Api.Controllers;
 using CommerceCore.Ordering.Application;
 using CommerceCore.Payments.Api.Controllers;
@@ -24,10 +25,13 @@ public sealed class PlatformFixture : IAsyncLifetime
     private WebApplicationFactory<ProductsController>? _catalog;
     private WebApplicationFactory<PaymentsController>? _payments;
     private WebApplicationFactory<OrdersController>? _ordering;
+    private WebApplicationFactory<NotificationsController>? _notifications;
 
     public RabbitMqBroker Broker { get; } = new();
     public HttpClient Orders { get; private set; } = null!;
     public HttpClient Payments { get; private set; } = null!;
+    public HttpClient NotificationsApi { get; private set; } = null!;
+    public IServiceProvider NotificationsServices => _notifications!.Services;
     public IServiceProvider CatalogServices => _catalog!.Services;
     public IServiceProvider PaymentsServices => _payments!.Services;
 
@@ -44,9 +48,11 @@ public sealed class PlatformFixture : IAsyncLifetime
             services.RemoveAll<IProductCatalogClient>();
             services.AddSingleton<IProductCatalogClient, AnyProductCatalogClient>();
         });
+        _notifications = Start<NotificationsController>("NotificationsE2eDb", _ => { });
 
         Orders = _ordering.CreateClient();
         Payments = _payments.CreateClient();
+        NotificationsApi = _notifications.CreateClient();
     }
 
     private WebApplicationFactory<T> Start<T>(string database, Action<IServiceCollection> configureServices) where T : class
@@ -77,9 +83,11 @@ public sealed class PlatformFixture : IAsyncLifetime
     {
         Orders.Dispose();
         Payments.Dispose();
+        NotificationsApi.Dispose();
         if (_ordering is not null) await _ordering.DisposeAsync();
         if (_payments is not null) await _payments.DisposeAsync();
         if (_catalog is not null) await _catalog.DisposeAsync();
+        if (_notifications is not null) await _notifications.DisposeAsync();
         await _sql.DisposeAsync();
         await Broker.DisposeAsync();
     }
