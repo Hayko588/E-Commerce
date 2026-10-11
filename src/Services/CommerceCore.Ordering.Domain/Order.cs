@@ -58,6 +58,17 @@ namespace CommerceCore.Ordering.Domain
             UpdatedAtUtc = DateTime.UtcNow;
         }
 
+        // An OrderConfirmed message can overtake the OrderStockReserved one (separate queues),
+        // so Pending is accepted here as well.
+        public void MarkPaid()
+        {
+            if (Status is not (OrderStatus.Pending or OrderStatus.StockReserved))
+                throw new DomainException($"Cannot mark an order paid while it is {Status}.");
+
+            Status = OrderStatus.Paid;
+            UpdatedAtUtc = DateTime.UtcNow;
+        }
+
         public void Cancel()
         {
             if (Status is OrderStatus.Completed or OrderStatus.Cancelled)

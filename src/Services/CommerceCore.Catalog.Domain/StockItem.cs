@@ -30,4 +30,12 @@ public sealed class StockItem
 
         Reserved += quantity;
     }
+
+    public void Release(int quantity)
+    {
+        if (quantity <= 0 || quantity > Reserved)
+            throw new DomainException($"Cannot release {quantity}; only {Reserved} reserved.");
+
+        Reserved -= quantity;
+    }
 }

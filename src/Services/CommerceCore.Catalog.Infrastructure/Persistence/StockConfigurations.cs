@@ -30,6 +30,7 @@ public sealed class StockReservationConfiguration : IEntityTypeConfiguration<Sto
         builder.HasKey(r => r.Id);
         builder.Property(r => r.Id).ValueGeneratedNever();
         builder.Property(r => r.CreatedAtUtc).HasPrecision(3);
+        builder.Property(r => r.ReleasedAtUtc).HasPrecision(3);
 
         // One reservation per product per order: the database enforces idempotency.
         builder.HasIndex(r => new { r.OrderId, r.ProductId }).IsUnique();

@@ -9,7 +9,8 @@ namespace CommerceCore.Ordering.Application.Commands
 {
     public record CreateOrderCommand(
         Guid CustomerId,
-        List<CreateOrderItemRequest> Items
+        List<CreateOrderItemRequest> Items,
+        string PaymentToken = "tok_ok"
     ) : IRequest<Guid>;
 
     public class CreateOrderCommandHandler(
@@ -35,10 +36,12 @@ namespace CommerceCore.Ordering.Application.Commands
 
             await orderRepository.AddAsync(order, cancellationToken);
 
-            // Written to the outbox table, committed in the same transaction as the order.
             await publisher.PublishAsync(new OrderSubmitted(
                 order.Id.Value,
                 order.CustomerId,
+                order.TotalAmount.Amount,
+                order.TotalAmount.Currency,
+                request.PaymentToken,
                 [.. request.Items.Select(i => new OrderItemLine(i.ProductId, i.Quantity))]), cancellationToken);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);

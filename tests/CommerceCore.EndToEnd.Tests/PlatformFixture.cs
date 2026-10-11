@@ -1,6 +1,7 @@
 ﻿using CommerceCore.Catalog.Api.Controllers;
 using CommerceCore.Ordering.Api.Controllers;
 using CommerceCore.Ordering.Application;
+using CommerceCore.Payments.Api.Controllers;
 using CommerceCore.TestSupport;
 using MassTransit;
 using Microsoft.AspNetCore.Hosting;
@@ -15,25 +16,29 @@ using Xunit;
 
 namespace CommerceCore.EndToEnd.Tests;
 
-// Two real services in one process, each with its own database, joined by a real RabbitMQ broker.
+// Three real services in one process, each with its own database, joined by a real RabbitMQ broker.
 public sealed class PlatformFixture : IAsyncLifetime
 {
     private readonly MsSqlContainer _sql = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").Build();
 
     private WebApplicationFactory<ProductsController>? _catalog;
+    private WebApplicationFactory<PaymentsController>? _payments;
     private WebApplicationFactory<OrdersController>? _ordering;
 
     public RabbitMqBroker Broker { get; } = new();
     public HttpClient Orders { get; private set; } = null!;
+    public HttpClient Payments { get; private set; } = null!;
     public IServiceProvider CatalogServices => _catalog!.Services;
+    public IServiceProvider PaymentsServices => _payments!.Services;
 
     public async Task InitializeAsync()
     {
         await Task.WhenAll(_sql.StartAsync(), Broker.StartAsync());
         Broker.ExportSettings();
 
-        // Catalog first: its queues must exist before Ordering publishes anything.
+        // Consumers first: their queues must exist before Ordering publishes anything.
         _catalog = Start<ProductsController>("CatalogE2eDb", _ => { });
+        _payments = Start<PaymentsController>("PaymentsE2eDb", _ => { });
         _ordering = Start<OrdersController>("OrdersE2eDb", services =>
         {
             services.RemoveAll<IProductCatalogClient>();
@@ -41,6 +46,7 @@ public sealed class PlatformFixture : IAsyncLifetime
         });
 
         Orders = _ordering.CreateClient();
+        Payments = _payments.CreateClient();
     }
 
     private WebApplicationFactory<T> Start<T>(string database, Action<IServiceCollection> configureServices) where T : class
@@ -70,7 +76,9 @@ public sealed class PlatformFixture : IAsyncLifetime
     public async Task DisposeAsync()
     {
         Orders.Dispose();
+        Payments.Dispose();
         if (_ordering is not null) await _ordering.DisposeAsync();
+        if (_payments is not null) await _payments.DisposeAsync();
         if (_catalog is not null) await _catalog.DisposeAsync();
         await _sql.DisposeAsync();
         await Broker.DisposeAsync();

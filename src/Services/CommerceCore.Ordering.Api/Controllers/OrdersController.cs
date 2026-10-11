@@ -17,7 +17,7 @@ public class OrdersController(ISender sender) : ControllerBase
         [FromBody] CreateOrderRequest request,
         CancellationToken ct)
     {
-        var command = new CreateOrderCommand(request.CustomerId, request.Items);
+        var command = new CreateOrderCommand(request.CustomerId, request.Items, request.PaymentToken);
         var orderId = await sender.Send(command, ct);
 
         return CreatedAtAction(nameof(GetOrderById), new { id = orderId }, orderId);

@@ -11,6 +11,9 @@ public sealed class StockReservation
     public Guid ProductId { get; private set; }
     public int Quantity { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
+    public DateTime? ReleasedAtUtc { get; private set; }
+
+    public void MarkReleased(DateTime nowUtc) => ReleasedAtUtc ??= nowUtc;
 
     public static StockReservation Create(Guid orderId, Guid productId, int quantity, DateTime createdAtUtc)
     {

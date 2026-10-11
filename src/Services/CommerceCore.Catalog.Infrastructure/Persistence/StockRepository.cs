@@ -18,4 +18,7 @@ internal sealed class StockRepository(CatalogDbContext db) : IStockRepository
     }
 
     public void AddReservation(StockReservation reservation) => db.StockReservations.Add(reservation);
+
+    public Task<List<StockReservation>> GetActiveReservationsAsync(Guid orderId, CancellationToken ct = default) =>
+        db.StockReservations.Where(r => r.OrderId == orderId && r.ReleasedAtUtc == null).ToListAsync(ct);
 }

@@ -122,6 +122,10 @@ namespace CommerceCore.Catalog.Infrastructure.Persistence.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("ReleasedAtUtc")
+                        .HasPrecision(3)
+                        .HasColumnType("datetime2(3)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");

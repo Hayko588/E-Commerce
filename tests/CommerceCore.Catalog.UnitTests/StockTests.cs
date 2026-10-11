@@ -35,6 +35,27 @@ public class StockItemTests
     [Fact]
     public void Stock_cannot_start_negative() =>
         Should.Throw<DomainException>(() => StockItem.Create(Product, -1));
+
+    [Fact]
+    public void Releasing_returns_quantity_to_availability()
+    {
+        var stock = StockItem.Create(Product, 10);
+        stock.Reserve(4);
+
+        stock.Release(3);
+
+        stock.Reserved.ShouldBe(1);
+        stock.Available.ShouldBe(9);
+    }
+
+    [Fact]
+    public void Releasing_more_than_reserved_is_rejected()
+    {
+        var stock = StockItem.Create(Product, 10);
+        stock.Reserve(2);
+
+        Should.Throw<DomainException>(() => stock.Release(3));
+    }
 }
 
 public class StockReservationServiceTests
@@ -107,5 +128,35 @@ public class StockReservationServiceTests
         var outcome = await _service.ReserveAsync(Guid.NewGuid(), [new(Keyboard, 2), new(Keyboard, 2)]);
 
         outcome.Reserved.ShouldBeFalse();   // 4 requested, 3 available
+    }
+
+    [Fact]
+    public async Task Release_returns_stock_and_marks_reservations_released()
+    {
+        var orderId = Guid.NewGuid();
+        var item = StockItem.Create(Keyboard, 10);
+        item.Reserve(3);
+        var reservation = StockReservation.Create(orderId, Keyboard, 3, DateTime.UtcNow);
+
+        _stock.GetActiveReservationsAsync(orderId, Arg.Any<CancellationToken>())
+            .Returns(new List<StockReservation> { reservation });
+        _stock.GetStockAsync(Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, StockItem> { [Keyboard] = item });
+
+        await _service.ReleaseAsync(orderId);
+
+        item.Reserved.ShouldBe(0);
+        reservation.ReleasedAtUtc.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task Release_with_nothing_active_does_nothing()
+    {
+        _stock.GetActiveReservationsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(new List<StockReservation>());
+
+        await _service.ReleaseAsync(Guid.NewGuid());
+
+        await _stock.DidNotReceive().GetStockAsync(Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>());
     }
 }

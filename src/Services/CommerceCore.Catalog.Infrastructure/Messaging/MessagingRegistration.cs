@@ -18,6 +18,7 @@ public static class MessagingRegistration
             x.SetKebabCaseEndpointNameFormatter();
 
             x.AddConsumer<ReserveStockConsumer>();
+            x.AddConsumer<ReleaseStockConsumer>();
 
             x.AddEntityFrameworkOutbox<CatalogDbContext>(o =>
             {

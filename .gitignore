@@ -71,3 +71,4 @@ x86/
 *.[Pp]ublish.xml
 
 *.env
+.env.example

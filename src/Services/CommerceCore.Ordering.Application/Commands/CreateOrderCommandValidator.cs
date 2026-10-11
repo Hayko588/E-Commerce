@@ -25,6 +25,10 @@ namespace CommerceCore.Ordering.Application.Commands
                 item.RuleFor(i => i.Quantity)
                     .InclusiveBetween(1, 100).WithMessage("Quantity must be between 1 and 100.");
             });
+
+            RuleFor(x => x.PaymentToken)
+                .NotEmpty().WithMessage("PaymentToken is required.")
+                .MaximumLength(64);
         }
     }
 }

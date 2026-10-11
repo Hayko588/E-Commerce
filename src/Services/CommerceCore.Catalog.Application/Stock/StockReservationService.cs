@@ -14,6 +14,7 @@ public interface IStockRepository
 {
     Task<bool> HasReservationAsync(Guid orderId, CancellationToken ct = default);
     Task<Dictionary<Guid, StockItem>> GetStockAsync(IReadOnlyCollection<Guid> productIds, CancellationToken ct = default);
+    Task<List<StockReservation>> GetActiveReservationsAsync(Guid orderId, CancellationToken ct = default);
     void AddReservation(StockReservation reservation);
 }
 
@@ -53,5 +54,21 @@ public sealed class StockReservationService(IStockRepository stock, TimeProvider
         }
 
         return ReservationOutcome.Success();
+    }
+
+    // Compensation. Safe to call twice: once everything is released there is nothing left to do.
+    public async Task ReleaseAsync(Guid orderId, CancellationToken ct = default)
+    {
+        var active = await stock.GetActiveReservationsAsync(orderId, ct);
+        if (active.Count == 0) return;
+
+        var levels = await stock.GetStockAsync(active.Select(r => r.ProductId).Distinct().ToList(), ct);
+        var now = clock.GetUtcNow().UtcDateTime;
+
+        foreach (var reservation in active)
+        {
+            levels[reservation.ProductId].Release(reservation.Quantity);
+            reservation.MarkReleased(now);
+        }
     }
 }

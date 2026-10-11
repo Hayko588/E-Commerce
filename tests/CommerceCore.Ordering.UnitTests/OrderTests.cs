@@ -78,4 +78,34 @@ public class OrderTests
         order.Status.ShouldBe(OrderStatus.Cancelled);
         Should.Throw<DomainException>(order.Cancel);
     }
+
+    [Fact]
+    public void A_reserved_order_can_be_marked_paid()
+    {
+        var order = new Order(Guid.NewGuid(), Item(10m));
+        order.MarkStockReserved();
+
+        order.MarkPaid();
+
+        order.Status.ShouldBe(OrderStatus.Paid);
+    }
+
+    [Fact]
+    public void Payment_may_be_recorded_before_the_stock_event_arrives()
+    {
+        var order = new Order(Guid.NewGuid(), Item(10m));
+
+        order.MarkPaid();
+
+        order.Status.ShouldBe(OrderStatus.Paid);
+    }
+
+    [Fact]
+    public void A_cancelled_order_cannot_be_marked_paid()
+    {
+        var order = new Order(Guid.NewGuid(), Item(10m));
+        order.Cancel();
+
+        Should.Throw<DomainException>(order.MarkPaid);
+    }
 }

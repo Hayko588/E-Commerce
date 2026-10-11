@@ -1,37 +1,19 @@
 ﻿services:
-  sqlserver-orders:
+  sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sqlserver-orders
+    container_name: sqlserver
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}
       MSSQL_PID: Developer
+      MSSQL_MEMORY_LIMIT_MB: "2048"
     ports:
-      - "1433:1433"
+      - "127.0.0.1:1433:1433"
     volumes:
-      - sqlserver_orders_data:/var/opt/mssql
+      - sqlserver_data:/var/opt/mssql
+    stop_grace_period: 60s
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
-    networks:
-      - commerce-network
-
-  sqlserver-catalog:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sqlserver-catalog
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}
-      MSSQL_PID: Developer
-    ports:
-      - "1434:1433"
-    volumes:
-      - sqlserver_catalog_data:/var/opt/mssql
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -b -Q \"IF EXISTS (SELECT 1 FROM sys.databases WHERE state <> 0) RAISERROR('databases not online', 16, 1)\""]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -46,7 +28,7 @@
     container_name: order-api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: "Server=sqlserver-orders;Database=OrdersDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=OrdersDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
       Services__Catalog__BaseUrl: http://catalog-api:8080
       RabbitMq__Host: rabbitmq
       RabbitMq__Username: ${RABBITMQ_USER:-commerce}
@@ -55,7 +37,7 @@
       - "5001:8080"
       - "127.0.0.1:15001:8080"
     depends_on:
-      sqlserver-orders:
+      sqlserver:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -69,7 +51,7 @@
     container_name: catalog-api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: "Server=sqlserver-catalog;Database=CatalogDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=CatalogDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
       RabbitMq__Host: rabbitmq
       RabbitMq__Username: ${RABBITMQ_USER:-commerce}
       RabbitMq__Password: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
@@ -77,7 +59,27 @@
       - "5002:8080"
       - "127.0.0.1:15002:8080"
     depends_on:
-      sqlserver-catalog:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - commerce-network
+
+  payments-api:
+    build:
+      context: .
+      dockerfile: src/Services/CommerceCore.Payments.Api/Dockerfile
+    container_name: payments-api
+    restart: on-failure
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=PaymentsDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-commerce}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+    depends_on:
+      sqlserver:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -94,6 +96,7 @@
       ASPNETCORE_ENVIRONMENT: Development
       ReverseProxy__Clusters__catalog__Destinations__primary__Address: http://catalog-api:8080/
       ReverseProxy__Clusters__ordering__Destinations__primary__Address: http://order-api:8080/
+      ReverseProxy__Clusters__payments__Destinations__primary__Address: http://payments-api:8080/
     ports:
       - "8080:8080"
     networks:
@@ -123,6 +126,5 @@ networks:
     driver: bridge
 
 volumes:
-  sqlserver_orders_data:
-  sqlserver_catalog_data:
+  sqlserver_data:
   rabbitmq_data:

@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\src\Services\CommerceCore.Catalog.Api\CommerceCore.Catalog.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\CommerceCore.Ordering.Api\CommerceCore.Ordering.Api.csproj" />
     <ProjectReference Include="..\CommerceCore.TestSupport\CommerceCore.TestSupport.csproj" />
+    <ProjectReference Include="..\..\src\Services\CommerceCore.Payments.Api\CommerceCore.Payments.Api.csproj" />
   </ItemGroup>
 
 </Project>

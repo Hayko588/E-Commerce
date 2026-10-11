@@ -41,7 +41,8 @@ public class CreateOrderCommandHandlerTests
             Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
         await _publisher.Received(1).PublishAsync(
-            Arg.Is<OrderSubmitted>(m => m.OrderId == orderId && m.Items.Count == 1 && m.Items[0].Quantity == 2),
+                        Arg.Is<OrderSubmitted>(m => m.OrderId == orderId && m.Items.Count == 1 && m.Items[0].Quantity == 2
+                                        && m.Total == 99.98m && m.PaymentToken == "tok_ok"),
             Arg.Any<CancellationToken>());
     }
 

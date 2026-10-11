@@ -28,6 +28,7 @@ public static class MessagingRegistration
 
             x.AddConsumer<OrderConfirmedConsumer>();
             x.AddConsumer<OrderRejectedConsumer>();
+            x.AddConsumer<OrderStockReservedConsumer>();
 
             x.AddSagaStateMachine<OrderStateMachine, OrderState>()
                 .EntityFrameworkRepository(r =>

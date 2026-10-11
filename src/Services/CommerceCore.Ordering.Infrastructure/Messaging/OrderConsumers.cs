@@ -7,6 +7,21 @@ using Microsoft.Extensions.Logging;
 
 namespace CommerceCore.Ordering.Infrastructure.Messaging;
 
+public sealed class OrderStockReservedConsumer(IOrderRepository orders, IUnitOfWork unitOfWork)
+    : IConsumer<OrderStockReserved>
+{
+    public async Task Consume(ConsumeContext<OrderStockReserved> context)
+    {
+        var order = await orders.GetByIdAsync(new OrderId(context.Message.OrderId), context.CancellationToken)
+            ?? throw new InvalidOperationException($"Order {context.Message.OrderId} not found.");
+
+        if (order.Status != OrderStatus.Pending) return;   // duplicate, or the order is already further along
+
+        order.MarkStockReserved();
+        await unitOfWork.SaveChangesAsync(context.CancellationToken);
+    }
+}
+
 public sealed class OrderConfirmedConsumer(IOrderRepository orders, IUnitOfWork unitOfWork)
     : IConsumer<OrderConfirmed>
 {
@@ -15,9 +30,9 @@ public sealed class OrderConfirmedConsumer(IOrderRepository orders, IUnitOfWork 
         var order = await orders.GetByIdAsync(new OrderId(context.Message.OrderId), context.CancellationToken)
             ?? throw new InvalidOperationException($"Order {context.Message.OrderId} not found.");
 
-        if (order.Status != OrderStatus.Pending) return;   // duplicate delivery
+        if (order.Status == OrderStatus.Paid) return;   // duplicate delivery
 
-        order.MarkStockReserved();
+        order.MarkPaid();
         await unitOfWork.SaveChangesAsync(context.CancellationToken);
     }
 }
