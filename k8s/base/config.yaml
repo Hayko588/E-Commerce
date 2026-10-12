@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: commerce-config
+  labels:
+    app.kubernetes.io/part-of: commerce-core
+    commerce.io/stage: infra
+data:
+  ASPNETCORE_ENVIRONMENT: Production
+  RabbitMq__Host: rabbitmq
+  RabbitMq__Username: commerce
+  Services__Catalog__BaseUrl: http://catalog-api:8080

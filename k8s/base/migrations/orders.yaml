@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: orders-migrate
+  labels:
+    app.kubernetes.io/name: orders-migrate
+    app.kubernetes.io/part-of: commerce-core
+    commerce.io/stage: migrate
+spec:
+  backoffLimit: 4
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: orders-migrate
+        app.kubernetes.io/part-of: commerce-core
+        commerce.io/needs-db: "true"
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: efbundle
+          image: ordering-migrator
+          envFrom:
+            - configMapRef:
+                name: commerce-config
+          env:
+            - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
+              value: /tmp/bundle
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: commerce-secrets
+                  key: ORDERS_MIGRATOR_CONN
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

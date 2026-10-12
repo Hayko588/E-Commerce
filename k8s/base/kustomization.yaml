@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: commerce-core
+
+resources:
+  - namespace.yaml
+  - config.yaml
+  - sqlserver.yaml
+  - rabbitmq.yaml
+  - dbinit.yaml
+  - migrations/orders.yaml
+  - migrations/catalog.yaml
+  - migrations/payments.yaml
+  - migrations/notifications.yaml
+
+configMapGenerator:
+  - name: sql-init-script
+    files:
+      - init-db.sql=files/init-db.sql
+    options:
+      disableNameSuffixHash: true
+      labels:
+        commerce.io/stage: dbinit

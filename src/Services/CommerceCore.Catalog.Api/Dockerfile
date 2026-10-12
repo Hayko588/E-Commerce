@@ -12,6 +12,7 @@ COPY ["src/Services/CommerceCore.Catalog.Application/CommerceCore.Catalog.Applic
 COPY ["src/Services/CommerceCore.Catalog.Domain/CommerceCore.Catalog.Domain.csproj", "src/Services/CommerceCore.Catalog.Domain/"]
 COPY ["src/Services/CommerceCore.Catalog.Infrastructure/CommerceCore.Catalog.Infrastructure.csproj", "src/Services/CommerceCore.Catalog.Infrastructure/"]
 COPY ["src/BuildingBlocks/CommerceCore.Contracts/CommerceCore.Contracts.csproj", "src/BuildingBlocks/CommerceCore.Contracts/"]
+COPY ["dotnet-tools.json", ".config/"]
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet restore "src/Services/CommerceCore.Catalog.Api/CommerceCore.Catalog.Api.csproj" --disable-parallel
@@ -25,6 +26,24 @@ COPY src/BuildingBlocks/CommerceCore.Contracts/ src/BuildingBlocks/CommerceCore.
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet publish "src/Services/CommerceCore.Catalog.Api/CommerceCore.Catalog.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+# Stage 1b: EF Core migration bundle. It runs as a Kubernetes Job, never inside the API container.
+FROM build AS migrations-build
+# The app is constructed (not run) to discover the DbContext, so it needs placeholder settings.
+ENV ConnectionStrings__DefaultConnection="Server=bundle;Database=bundle;User Id=bundle;Password=bundle;TrustServerCertificate=True" \
+    Services__Catalog__BaseUrl="http://localhost"
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
+    dotnet tool restore && \
+    dotnet ef migrations bundle \
+      --project src/Services/CommerceCore.Catalog.Infrastructure \
+      --startup-project src/Services/CommerceCore.Catalog.Api \
+      --self-contained -r linux-x64 --force -o /out/efbundle
+
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0 AS migrator
+WORKDIR /app
+COPY --from=migrations-build /out/efbundle ./efbundle
+USER app
+ENTRYPOINT ["./efbundle"]
 
 # Stage 2: Runtime Image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final

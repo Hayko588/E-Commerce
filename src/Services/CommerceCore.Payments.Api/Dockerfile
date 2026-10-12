@@ -11,6 +11,7 @@ COPY ["src/Services/CommerceCore.Payments.Api/CommerceCore.Payments.Api.csproj",
 COPY ["src/Services/CommerceCore.Payments.Application/CommerceCore.Payments.Application.csproj", "src/Services/CommerceCore.Payments.Application/"]
 COPY ["src/Services/CommerceCore.Payments.Domain/CommerceCore.Payments.Domain.csproj", "src/Services/CommerceCore.Payments.Domain/"]
 COPY ["src/Services/CommerceCore.Payments.Infrastructure/CommerceCore.Payments.Infrastructure.csproj", "src/Services/CommerceCore.Payments.Infrastructure/"]
+COPY ["dotnet-tools.json", ".config/"]
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet restore "src/Services/CommerceCore.Payments.Api/CommerceCore.Payments.Api.csproj" --disable-parallel
@@ -23,6 +24,24 @@ COPY src/Services/CommerceCore.Payments.Infrastructure/ src/Services/CommerceCor
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet publish "src/Services/CommerceCore.Payments.Api/CommerceCore.Payments.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+# Stage 1b: EF Core migration bundle. It runs as a Kubernetes Job, never inside the API container.
+FROM build AS migrations-build
+# The app is constructed (not run) to discover the DbContext, so it needs placeholder settings.
+ENV ConnectionStrings__DefaultConnection="Server=bundle;Database=bundle;User Id=bundle;Password=bundle;TrustServerCertificate=True" \
+    Services__Catalog__BaseUrl="http://localhost"
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
+    dotnet tool restore && \
+    dotnet ef migrations bundle \
+      --project src/Services/CommerceCore.Payments.Infrastructure \
+      --startup-project src/Services/CommerceCore.Payments.Api \
+      --self-contained -r linux-x64 --force -o /out/efbundle
+
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0 AS migrator
+WORKDIR /app
+COPY --from=migrations-build /out/efbundle ./efbundle
+USER app
+ENTRYPOINT ["./efbundle"]
 
 # Stage 2: Runtime Image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final

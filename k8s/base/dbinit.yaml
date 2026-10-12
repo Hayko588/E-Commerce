@@ -1,0 +1,62 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-init
+  labels:
+    app.kubernetes.io/name: db-init
+    app.kubernetes.io/part-of: commerce-core
+    commerce.io/stage: dbinit
+spec:
+  backoffLimit: 10
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: db-init
+        app.kubernetes.io/part-of: commerce-core
+        commerce.io/needs-db: "true"
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: sqlcmd
+          image: mcr.microsoft.com/mssql/server:2022-latest   # same image as the server: already on the node
+          command: [/bin/bash, -c]
+          args:
+            - |
+              set -euo pipefail
+              SQLCMD=/opt/mssql-tools18/bin/sqlcmd
+
+              until "$SQLCMD" -S sqlserver -U sa -P "$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" >/dev/null 2>&1; do
+                echo "waiting for sqlserver"; sleep 5
+              done
+
+              init() {   # database, service, app password, migrator password
+                echo "initialising $1"
+                "$SQLCMD" -S sqlserver -U sa -P "$MSSQL_SA_PASSWORD" -C -b -i /scripts/init-db.sql \
+                  -v DB="$1" SVC="$2" APP_PASSWORD="$3" MIGRATOR_PASSWORD="$4"
+              }
+
+              init OrdersDb        orders        "$ORDERS_APP_PASSWORD"        "$ORDERS_MIGRATOR_PASSWORD"
+              init CatalogDb       catalog       "$CATALOG_APP_PASSWORD"       "$CATALOG_MIGRATOR_PASSWORD"
+              init PaymentsDb      payments      "$PAYMENTS_APP_PASSWORD"      "$PAYMENTS_MIGRATOR_PASSWORD"
+              init NotificationsDb notifications "$NOTIFICATIONS_APP_PASSWORD" "$NOTIFICATIONS_MIGRATOR_PASSWORD"
+          envFrom:
+            - secretRef:
+                name: commerce-secrets
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: sql-init-script

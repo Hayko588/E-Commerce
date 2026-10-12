@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: commerce-core
+  labels:
+    app.kubernetes.io/part-of: commerce-core
+    commerce.io/stage: infra
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted
