@@ -13,6 +13,13 @@ resources:
   - migrations/catalog.yaml
   - migrations/payments.yaml
   - migrations/notifications.yaml
+  - networkpolicies.yaml
+  - apps/ordering-api.yaml
+  - apps/catalog-api.yaml
+  - apps/payments-api.yaml
+  - apps/notifications-api.yaml
+  - apps/gateway.yaml
+  - ingress.yaml
 
 configMapGenerator:
   - name: sql-init-script

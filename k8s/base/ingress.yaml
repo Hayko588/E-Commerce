@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: commerce-core
+  labels:
+    app.kubernetes.io/part-of: commerce-core
+    commerce.io/stage: apps
+spec:
+  ingressClassName: traefik          # K3s ships Traefik; check with: kubectl get ingressclass
+  rules:
+    - host: commerce.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 8080

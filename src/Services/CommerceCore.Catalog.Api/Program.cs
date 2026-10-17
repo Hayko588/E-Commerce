@@ -1,3 +1,4 @@
+using CommerceCore.Catalog.Api;
 using CommerceCore.Catalog.Api.Middleware;
 using CommerceCore.Catalog.Application;
 using CommerceCore.Catalog.Infrastructure;
@@ -38,12 +39,19 @@ app.MapControllers();
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("db") });
 
-if (app.Environment.IsDevelopment())
+var seed = app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Seed:Enabled");
+
+if (app.Environment.IsDevelopment() || seed)
 {
     await using var scope = app.Services.CreateAsyncScope();
     var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
-    await db.Database.MigrateAsync();
-    await CatalogSeeder.SeedAsync(db, scope.ServiceProvider.GetRequiredService<TimeProvider>());
+
+    // Development only. In the cluster, schema changes belong to the migration Job.
+    if (app.Environment.IsDevelopment())
+        await db.MigrateWithRetryAsync(app.Logger);
+
+    if (seed)
+        await CatalogSeeder.SeedAsync(db, scope.ServiceProvider.GetRequiredService<TimeProvider>());
 }
 
 app.Run();

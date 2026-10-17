@@ -17,3 +17,29 @@ images:
   - name: notifications-migrator
     newName: commerce/notifications-migrator
     newTag: dev
+  - name: ordering-api
+    newName: commerce/ordering-api
+    newTag: dev
+  - name: catalog-api
+    newName: commerce/catalog-api
+    newTag: dev
+  - name: payments-api
+    newName: commerce/payments-api
+    newTag: dev
+  - name: notifications-api
+    newName: commerce/notifications-api
+    newTag: dev
+  - name: gateway
+    newName: commerce/gateway
+    newTag: dev
+
+patches:
+  - target:
+      kind: Deployment
+      name: catalog-api
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: Seed__Enabled
+          value: "true"

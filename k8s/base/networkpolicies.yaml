@@ -1,0 +1,117 @@
+# Everything is denied, then the paths that must work are opened one by one.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  labels:
+    app.kubernetes.io/part-of: commerce-core
+    commerce.io/stage: infra
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+# The ingress controller (Traefik, in kube-system on K3s) may reach the gateway and nothing else.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-controller-to-gateway
+  labels:
+    app.kubernetes.io/part-of: commerce-core
+    commerce.io/stage: infra
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: gateway
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - port: 8080
+---
+# Only the gateway may call the services. This is also why /internal can never be reached from outside.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-services
+  labels:
+    app.kubernetes.io/part-of: commerce-core
+    commerce.io/stage: infra
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: [ordering-api, catalog-api, payments-api, notifications-api]
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gateway
+      ports:
+        - port: 8080
+---
+# Ordering looks up prices in Catalog (the internal endpoint).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ordering-to-catalog
+  labels:
+    app.kubernetes.io/part-of: commerce-core
+    commerce.io/stage: infra
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: catalog-api
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ordering-api
+      ports:
+        - port: 8080
+---
+# Only pods that declare they need the database (services and Jobs) may reach it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-to-sqlserver
+  labels:
+    app.kubernetes.io/part-of: commerce-core
+    commerce.io/stage: infra
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: sqlserver
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              commerce.io/needs-db: "true"
+      ports:
+        - port: 1433
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-to-rabbitmq
+  labels:
+    app.kubernetes.io/part-of: commerce-core
+    commerce.io/stage: infra
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              commerce.io/needs-mq: "true"
+      ports:
+        - port: 5672
