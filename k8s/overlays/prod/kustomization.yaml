@@ -1,0 +1,61 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - pdb.yaml
+
+# CI replaces the tags with the commit SHA (kustomize edit set image).
+images:
+  - name: ordering-api
+    newName: ghcr.io/hayko588/e-commerce/ordering-api
+    newTag: latest
+  - name: catalog-api
+    newName: ghcr.io/hayko588/e-commerce/catalog-api
+    newTag: latest
+  - name: payments-api
+    newName: ghcr.io/hayko588/e-commerce/payments-api
+    newTag: latest
+  - name: notifications-api
+    newName: ghcr.io/hayko588/e-commerce/notifications-api
+    newTag: latest
+  - name: gateway
+    newName: ghcr.io/hayko588/e-commerce/gateway
+    newTag: latest
+  - name: ordering-migrator
+    newName: ghcr.io/hayko588/e-commerce/ordering-migrator
+    newTag: latest
+  - name: catalog-migrator
+    newName: ghcr.io/hayko588/e-commerce/catalog-migrator
+    newTag: latest
+  - name: payments-migrator
+    newName: ghcr.io/hayko588/e-commerce/payments-migrator
+    newTag: latest
+  - name: notifications-migrator
+    newName: ghcr.io/hayko588/e-commerce/notifications-migrator
+    newTag: latest
+
+patches:
+  # Two replicas for services that don't autoscale.
+  - target:
+      kind: Deployment
+      name: catalog-api|payments-api|notifications-api
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+  # The autoscaled ones never drop below two, so a rolling restart or a node drain keeps serving.
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 2
+  # Your real domain goes here. For TLS, add a `tls` section and a cert-manager issuer annotation.
+  - target:
+      kind: Ingress
+      name: commerce-core
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: commerce.example.com

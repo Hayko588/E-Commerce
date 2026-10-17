@@ -142,6 +142,18 @@ jobs:
             dockerfile: src/Services/CommerceCore.Payments.Api/Dockerfile
           - name: notifications-api
             dockerfile: src/Services/CommerceCore.Notifications.Api/Dockerfile
+          - name: ordering-migrator
+            dockerfile: src/Services/CommerceCore.Ordering.Api/Dockerfile
+            target: migrator
+          - name: catalog-migrator
+            dockerfile: src/Services/CommerceCore.Catalog.Api/Dockerfile
+            target: migrator
+          - name: payments-migrator
+            dockerfile: src/Services/CommerceCore.Payments.Api/Dockerfile
+            target: migrator
+          - name: notifications-migrator
+            dockerfile: src/Services/CommerceCore.Notifications.Api/Dockerfile
+            target: migrator
     env:
       PUSH: ${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'master') }}
     steps:
@@ -173,8 +185,91 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
           push: ${{ env.PUSH == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  k8s-smoke:
+    needs: [build-test, format]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build images
+        run: bash scripts/build-images.sh all | tee images.txt
+
+      - name: Create a kind cluster and load the images
+        run: |
+          kind version
+          kind create cluster --name commerce --wait 180s
+          xargs kind load docker-image --name commerce < images.txt
+
+      - name: Deploy the platform (same script as local development)
+        run: bash scripts/k8s-deploy.sh local
+
+      - name: Smoke test through the gateway
+        run: |
+          kubectl -n commerce-core port-forward svc/gateway 8088:8080 >/dev/null 2>&1 &
+          forward=$!
+          trap 'kill $forward' EXIT
+          for _ in $(seq 1 30); do
+            curl -s -o /dev/null http://127.0.0.1:8088/health/live && break
+            sleep 1
+          done
+          bash scripts/smoke-test.sh http://127.0.0.1:8088
+
+      - name: Diagnostics
+        if: failure()
+        run: |
+          kubectl -n commerce-core get pods -o wide || true
+          kubectl -n commerce-core get events --sort-by=.lastTimestamp | tail -40 || true
+          for d in ordering-api catalog-api payments-api notifications-api gateway; do
+            echo "::group::logs $d"
+            kubectl -n commerce-core logs deploy/$d --tail=80 || true
+            echo "::endgroup::"
+          done
+
+  deploy:
+    needs: [docker, k8s-smoke]
+    if: >-
+      vars.DEPLOY_ENABLED == 'true' &&
+      github.event_name == 'push' &&
+      (github.ref_name == 'main' || github.ref_name == 'master')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production       # required reviewers are configured on this environment
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false   # never abort a deployment halfway
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG_B64 }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+          kubectl version --client
+
+      - name: Pin the images to this commit
+        working-directory: k8s/overlays/prod
+        run: |
+          repo="ghcr.io/${GITHUB_REPOSITORY,,}"
+          for name in ordering-api catalog-api payments-api notifications-api gateway \
+                      ordering-migrator catalog-migrator payments-migrator notifications-migrator; do
+            kustomize edit set image "$name=$repo/$name:${GITHUB_SHA}"
+          done
+
+      - name: Deploy (infra, database init, migrations, apps)
+        run: bash scripts/k8s-deploy.sh prod
+
+      - name: Verify
+        run: |
+          kubectl -n commerce-core get pods
+          curl -fsS "https://${{ vars.COMMERCE_HOST }}/health/ready"
