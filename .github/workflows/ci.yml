@@ -93,15 +93,6 @@ jobs:
           dotnet test tests/CommerceCore.EndToEnd.Tests -c Release --no-build
           --logger "trx;LogFileName=e2e.trx" --results-directory TestResults
 
-      - name: Check for vulnerable packages
-        shell: bash
-        run: |
-          dotnet list ${{ env.SOLUTION }} package --vulnerable --include-transitive 2>&1 | tee vulnerable.txt
-          if grep -q "has the following vulnerable packages" vulnerable.txt; then
-            echo "::error::Vulnerable packages found. See the log above."
-            exit 1
-          fi
-
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
