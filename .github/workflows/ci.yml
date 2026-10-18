@@ -36,6 +36,15 @@ jobs:
       - name: Build
         run: dotnet build ${{ env.SOLUTION }} -c Release --no-restore
 
+      - name: Check for vulnerable packages
+        shell: bash
+        run: |
+          dotnet list ${{ env.SOLUTION }} package --vulnerable --include-transitive 2>&1 | tee vulnerable.txt
+          if grep -q "has the following vulnerable packages" vulnerable.txt; then
+            echo "::error::Vulnerable packages found. See the log above."
+            exit 1
+          fi
+
       - name: Check EF migrations match the models
         shell: bash
         env:
