@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY ["Directory.Build.props", "./"]
+COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
 
 # Copy csproj files first to maximize Docker layer caching
 COPY ["src/Services/CommerceCore.Ordering.Api/CommerceCore.Ordering.Api.csproj", "src/Services/CommerceCore.Ordering.Api/"]
