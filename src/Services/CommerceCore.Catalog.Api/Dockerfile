@@ -4,9 +4,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY ["Directory.Build.props", "./"]
-
-# Copy csproj files first to maximize Docker layer caching
+COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
 COPY ["src/Services/CommerceCore.Catalog.Api/CommerceCore.Catalog.Api.csproj", "src/Services/CommerceCore.Catalog.Api/"]
 COPY ["src/Services/CommerceCore.Catalog.Application/CommerceCore.Catalog.Application.csproj", "src/Services/CommerceCore.Catalog.Application/"]
 COPY ["src/Services/CommerceCore.Catalog.Domain/CommerceCore.Catalog.Domain.csproj", "src/Services/CommerceCore.Catalog.Domain/"]

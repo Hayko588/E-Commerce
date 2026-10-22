@@ -61,6 +61,17 @@ jobs:
               -- --environment Development
           done
 
+      - name: Licence guard (no commercial major versions)
+        shell: bash
+        run: |
+          bad=$(grep -E 'PackageVersion Include="MassTransit[^"]*"' Directory.Packages.props | grep -vE 'Version="8\.' || true)
+          bad+=$(grep -E 'PackageVersion Include="MediatR"' Directory.Packages.props | grep -vE 'Version="12\.' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::MassTransit must stay on 8.x and MediatR on 12.x (later major versions are commercially licensed)."
+            echo "$bad"
+            exit 1
+          fi
+
       - name: Unit tests
         run: >
           dotnet test tests/CommerceCore.Ordering.UnitTests -c Release --no-build

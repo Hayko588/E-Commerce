@@ -4,8 +4,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY ["Directory.Build.props", "./"]
-
+COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
 COPY ["src/BuildingBlocks/CommerceCore.Contracts/CommerceCore.Contracts.csproj", "src/BuildingBlocks/CommerceCore.Contracts/"]
 COPY ["src/Services/CommerceCore.Notifications.Api/CommerceCore.Notifications.Api.csproj", "src/Services/CommerceCore.Notifications.Api/"]
 COPY ["src/Services/CommerceCore.Notifications.Application/CommerceCore.Notifications.Application.csproj", "src/Services/CommerceCore.Notifications.Application/"]
