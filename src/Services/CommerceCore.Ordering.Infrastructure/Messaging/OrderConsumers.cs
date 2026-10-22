@@ -34,6 +34,10 @@ public sealed class OrderConfirmedConsumer(IOrderRepository orders, IUnitOfWork 
 
         order.MarkPaid();
         await unitOfWork.SaveChangesAsync(context.CancellationToken);
+
+        var outcome = new KeyValuePair<string, object?>("outcome", "paid");
+        OrderMetrics.Finished.Add(1, outcome);
+        OrderMetrics.ProcessingSeconds.Record((DateTime.UtcNow - order.CreatedAtUtc).TotalSeconds, outcome);
     }
 }
 
@@ -50,6 +54,10 @@ public sealed class OrderRejectedConsumer(
 
         order.Cancel();
         await unitOfWork.SaveChangesAsync(context.CancellationToken);
+
+        var outcome = new KeyValuePair<string, object?>("outcome", "cancelled");
+        OrderMetrics.Finished.Add(1, outcome);
+        OrderMetrics.ProcessingSeconds.Record((DateTime.UtcNow - order.CreatedAtUtc).TotalSeconds, outcome);
 
         logger.LogWarning("Order {OrderId} cancelled: {Reason}", context.Message.OrderId, context.Message.Reason);
     }

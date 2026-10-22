@@ -45,7 +45,7 @@ namespace CommerceCore.Ordering.Application.Commands
                 [.. request.Items.Select(i => new OrderItemLine(i.ProductId, i.Quantity))]), cancellationToken);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
-
+            OrderMetrics.Created.Add(1);
             return order.Id.Value;
         }
     }

@@ -11,6 +11,7 @@ COPY ["src/Services/CommerceCore.Payments.Api/CommerceCore.Payments.Api.csproj",
 COPY ["src/Services/CommerceCore.Payments.Application/CommerceCore.Payments.Application.csproj", "src/Services/CommerceCore.Payments.Application/"]
 COPY ["src/Services/CommerceCore.Payments.Domain/CommerceCore.Payments.Domain.csproj", "src/Services/CommerceCore.Payments.Domain/"]
 COPY ["src/Services/CommerceCore.Payments.Infrastructure/CommerceCore.Payments.Infrastructure.csproj", "src/Services/CommerceCore.Payments.Infrastructure/"]
+COPY ["src/BuildingBlocks/CommerceCore.BuildingBlocks/CommerceCore.BuildingBlocks.csproj", "src/BuildingBlocks/CommerceCore.BuildingBlocks/"]
 COPY ["dotnet-tools.json", ".config/"]
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
@@ -21,6 +22,7 @@ COPY src/Services/CommerceCore.Payments.Api/ src/Services/CommerceCore.Payments.
 COPY src/Services/CommerceCore.Payments.Application/ src/Services/CommerceCore.Payments.Application/
 COPY src/Services/CommerceCore.Payments.Domain/ src/Services/CommerceCore.Payments.Domain/
 COPY src/Services/CommerceCore.Payments.Infrastructure/ src/Services/CommerceCore.Payments.Infrastructure/
+COPY src/BuildingBlocks/CommerceCore.BuildingBlocks/ src/BuildingBlocks/CommerceCore.BuildingBlocks/
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet publish "src/Services/CommerceCore.Payments.Api/CommerceCore.Payments.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false

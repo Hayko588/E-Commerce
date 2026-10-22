@@ -1,3 +1,4 @@
+using CommerceCore.BuildingBlocks.Telemetry;
 using CommerceCore.Catalog.Api;
 using CommerceCore.Catalog.Api.Middleware;
 using CommerceCore.Catalog.Application;
@@ -24,6 +25,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks().AddDbContextCheck<CatalogDbContext>("db", tags: ["db"]);
+builder.Services.AddCommerceTelemetry(builder.Configuration, "catalog-api");
 
 var app = builder.Build();
 

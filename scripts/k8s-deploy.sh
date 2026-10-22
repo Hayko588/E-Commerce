@@ -7,7 +7,11 @@ cd "$(git rev-parse --show-toplevel)"
 
 overlay="${1:?usage: k8s-deploy.sh <overlay> [stage...]}"; shift || true
 stages=("$@")
-[ ${#stages[@]} -eq 0 ] && stages=(infra dbinit migrate apps)
+if [ ${#stages[@]} -eq 0 ]; then
+  stages=(infra dbinit migrate apps)
+  # Local development includes the dev observability backend. Other overlays bring their own.
+  [ "$overlay" = local ] && stages=(infra observability dbinit migrate apps)
+fi
 
 dir="k8s/overlays/$overlay"
 ns=commerce-core
@@ -36,6 +40,10 @@ for stage in "${stages[@]}"; do
       kubectl -n "$ns" delete job -l "commerce.io/stage=$stage" --ignore-not-found --wait=true
       apply "$stage"
       wait_for_jobs "$stage"
+      ;;
+    observability)
+      apply observability
+      kubectl -n "$ns" rollout status deployment/lgtm --timeout=600s
       ;;
     apps)
       apply apps

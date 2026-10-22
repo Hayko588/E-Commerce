@@ -4,6 +4,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CommerceCore.Catalog.Application\CommerceCore.Catalog.Application.csproj" />
     <ProjectReference Include="..\CommerceCore.Catalog.Infrastructure\CommerceCore.Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\CommerceCore.BuildingBlocks\CommerceCore.BuildingBlocks.csproj" />
   </ItemGroup>
 
   <ItemGroup>

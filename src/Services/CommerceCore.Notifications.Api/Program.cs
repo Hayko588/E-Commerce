@@ -1,3 +1,4 @@
+using CommerceCore.BuildingBlocks.Telemetry;
 using CommerceCore.Notifications.Api;
 using CommerceCore.Notifications.Application;
 using CommerceCore.Notifications.Infrastructure;
@@ -21,6 +22,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks().AddDbContextCheck<NotificationsDbContext>("db", tags: ["db"]);
+builder.Services.AddCommerceTelemetry(builder.Configuration, "notifications-api");
 
 var app = builder.Build();
 

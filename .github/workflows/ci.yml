@@ -209,7 +209,7 @@ jobs:
           xargs kind load docker-image --name commerce < images.txt
 
       - name: Deploy the platform (same script as local development)
-        run: bash scripts/k8s-deploy.sh local
+        run: bash scripts/k8s-deploy.sh local infra dbinit migrate apps
 
       - name: Smoke test through the gateway
         run: |

@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CommerceCore.Payments.Application\CommerceCore.Payments.Application.csproj" />
     <ProjectReference Include="..\CommerceCore.Payments.Infrastructure\CommerceCore.Payments.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\CommerceCore.BuildingBlocks\CommerceCore.BuildingBlocks.csproj" />
   </ItemGroup>
 
   <ItemGroup>

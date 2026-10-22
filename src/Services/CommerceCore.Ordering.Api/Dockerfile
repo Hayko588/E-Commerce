@@ -10,6 +10,7 @@ COPY ["src/Services/CommerceCore.Ordering.Application/CommerceCore.Ordering.Appl
 COPY ["src/Services/CommerceCore.Ordering.Domain/CommerceCore.Ordering.Domain.csproj", "src/Services/CommerceCore.Ordering.Domain/"]
 COPY ["src/Services/CommerceCore.Ordering.Infrastructure/CommerceCore.Ordering.Infrastructure.csproj", "src/Services/CommerceCore.Ordering.Infrastructure/"]
 COPY ["src/BuildingBlocks/CommerceCore.Contracts/CommerceCore.Contracts.csproj", "src/BuildingBlocks/CommerceCore.Contracts/"]
+COPY ["src/BuildingBlocks/CommerceCore.BuildingBlocks/CommerceCore.BuildingBlocks.csproj", "src/BuildingBlocks/CommerceCore.BuildingBlocks/"]
 COPY ["dotnet-tools.json", ".config/"]
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
@@ -20,6 +21,7 @@ COPY src/Services/CommerceCore.Ordering.Application/ src/Services/CommerceCore.O
 COPY src/Services/CommerceCore.Ordering.Domain/ src/Services/CommerceCore.Ordering.Domain/
 COPY src/Services/CommerceCore.Ordering.Infrastructure/ src/Services/CommerceCore.Ordering.Infrastructure/
 COPY src/BuildingBlocks/CommerceCore.Contracts/ src/BuildingBlocks/CommerceCore.Contracts/
+COPY src/BuildingBlocks/CommerceCore.BuildingBlocks/ src/BuildingBlocks/CommerceCore.BuildingBlocks/
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet publish "src/Services/CommerceCore.Ordering.Api/CommerceCore.Ordering.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false

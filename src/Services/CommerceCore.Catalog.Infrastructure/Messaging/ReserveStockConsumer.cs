@@ -26,5 +26,7 @@ public sealed class ReserveStockConsumer(StockReservationService reservations, C
         // A concurrent reservation of the same item throws DbUpdateConcurrencyException here;
         // the retry policy redelivers the message and it is evaluated against the fresh stock level.
         await db.SaveChangesAsync(context.CancellationToken);
+
+        StockMetrics.Reservations.Add(1, new KeyValuePair<string, object?>("outcome", outcome.Reserved ? "reserved" : "rejected"));
     }
 }

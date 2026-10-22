@@ -4,4 +4,8 @@
     <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\CommerceCore.BuildingBlocks\CommerceCore.BuildingBlocks.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -30,6 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CommerceCore.Ordering.Application\CommerceCore.Ordering.Application.csproj" />
     <ProjectReference Include="..\CommerceCore.Ordering.Infrastructure\CommerceCore.Ordering.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\CommerceCore.BuildingBlocks\CommerceCore.BuildingBlocks.csproj" />
   </ItemGroup>
 
 </Project>

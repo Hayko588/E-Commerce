@@ -20,6 +20,7 @@ resources:
   - apps/notifications-api.yaml
   - apps/gateway.yaml
   - ingress.yaml
+  - observability.yaml
 
 configMapGenerator:
   - name: sql-init-script
@@ -29,3 +30,18 @@ configMapGenerator:
       disableNameSuffixHash: true
       labels:
         commerce.io/stage: dbinit
+
+patches:
+  - target:
+      kind: Deployment
+      labelSelector: commerce.io/stage=apps
+    patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/commerce.io~1needs-otel
+        value: "true"
+      - op: add
+        path: /spec/template/spec/containers/0/envFrom/-
+        value:
+          configMapRef:
+            name: observability-config
+            optional: true

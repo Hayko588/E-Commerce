@@ -1,4 +1,5 @@
-﻿using CommerceCore.Ordering.Api.Middleware;
+﻿using CommerceCore.BuildingBlocks.Telemetry;
+using CommerceCore.Ordering.Api.Middleware;
 using CommerceCore.Ordering.Application;
 using CommerceCore.Ordering.Infrastructure;
 using CommerceCore.Ordering.Infrastructure.Messaging;
@@ -21,6 +22,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks().AddDbContextCheck<OrderDbContext>("db", tags: ["db"]);
+builder.Services.AddCommerceTelemetry(builder.Configuration, "ordering-api");
 
 var app = builder.Build();
 

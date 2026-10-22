@@ -1,3 +1,4 @@
+using CommerceCore.BuildingBlocks.Telemetry;
 using CommerceCore.Payments.Api;
 using CommerceCore.Payments.Api.Middleware;
 using CommerceCore.Payments.Application;
@@ -23,6 +24,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks().AddDbContextCheck<PaymentsDbContext>("db", tags: ["db"]);
+builder.Services.AddCommerceTelemetry(builder.Configuration, "payments-api");
 
 var app = builder.Build();
 

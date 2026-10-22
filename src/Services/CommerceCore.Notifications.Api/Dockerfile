@@ -11,6 +11,7 @@ COPY ["src/Services/CommerceCore.Notifications.Api/CommerceCore.Notifications.Ap
 COPY ["src/Services/CommerceCore.Notifications.Application/CommerceCore.Notifications.Application.csproj", "src/Services/CommerceCore.Notifications.Application/"]
 COPY ["src/Services/CommerceCore.Notifications.Domain/CommerceCore.Notifications.Domain.csproj", "src/Services/CommerceCore.Notifications.Domain/"]
 COPY ["src/Services/CommerceCore.Notifications.Infrastructure/CommerceCore.Notifications.Infrastructure.csproj", "src/Services/CommerceCore.Notifications.Infrastructure/"]
+COPY ["src/BuildingBlocks/CommerceCore.BuildingBlocks/CommerceCore.BuildingBlocks.csproj", "src/BuildingBlocks/CommerceCore.BuildingBlocks/"]
 COPY ["dotnet-tools.json", ".config/"]
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
@@ -21,6 +22,7 @@ COPY src/Services/CommerceCore.Notifications.Api/ src/Services/CommerceCore.Noti
 COPY src/Services/CommerceCore.Notifications.Application/ src/Services/CommerceCore.Notifications.Application/
 COPY src/Services/CommerceCore.Notifications.Domain/ src/Services/CommerceCore.Notifications.Domain/
 COPY src/Services/CommerceCore.Notifications.Infrastructure/ src/Services/CommerceCore.Notifications.Infrastructure/
+COPY src/BuildingBlocks/CommerceCore.BuildingBlocks/ src/BuildingBlocks/CommerceCore.BuildingBlocks/
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet publish "src/Services/CommerceCore.Notifications.Api/CommerceCore.Notifications.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false

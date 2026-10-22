@@ -1,12 +1,13 @@
-using System.Text.RegularExpressions;
-using System.Threading.RateLimiting;
+using CommerceCore.BuildingBlocks.Telemetry;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using System.Text.RegularExpressions;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<RateLimitSettings>(builder.Configuration.GetSection("RateLimiting"));
-
+builder.Services.AddCommerceTelemetry(builder.Configuration, "gateway");
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 

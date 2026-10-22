@@ -59,6 +59,7 @@ public sealed class PaymentProcessor(IPaymentRepository payments, IPaymentGatewa
             : Payment.Failed(orderId, amount, currency, result.DeclineReason ?? "Payment declined.", now);
 
         payments.Add(payment);
+        PaymentMetrics.Processed.Add(1, new KeyValuePair<string, object?>("status", payment.Status.ToString().ToLowerInvariant()));
         return payment;
     }
 }

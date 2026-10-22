@@ -15,5 +15,7 @@ public sealed class ReleaseStockConsumer(StockReservationService reservations, C
 
         // Stock levels, reservation rows and the outgoing event commit together.
         await db.SaveChangesAsync(context.CancellationToken);
+
+        StockMetrics.Reservations.Add(1, new KeyValuePair<string, object?>("outcome", "released"));
     }
 }
