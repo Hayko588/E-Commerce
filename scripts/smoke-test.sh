@@ -12,6 +12,9 @@ CUSTOMER=3fa85f64-5717-4562-b3fc-2c963f66afa6
 req() { curl -sS -H "Host: $HOST" "$@"; }
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
+curl -sS -o /dev/null --max-time 5 -H "Host: $HOST" "$BASE/health/live" \
+  || fail "cannot reach $BASE. Is the platform running? (cluster: kubectl -n commerce-core get pods | compose: docker compose ps)"
+
 # Polls a URL until the body matches a regular expression.
 wait_for() {   # description, url, pattern, [attempts]
   local what="$1" url="$2" pattern="$3" attempts="${4:-60}"

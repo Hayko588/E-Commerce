@@ -40,6 +40,7 @@ spec:
         runAsNonRoot: true
         runAsUser: 10001
         fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: mssql
           image: mcr.microsoft.com/mssql/server:2022-latest
