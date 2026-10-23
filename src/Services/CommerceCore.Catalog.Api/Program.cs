@@ -25,6 +25,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks().AddDbContextCheck<CatalogDbContext>("db", tags: ["db"]);
+
 builder.Services.AddCommerceTelemetry(builder.Configuration, "catalog-api");
 
 var app = builder.Build();
@@ -43,17 +44,11 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check 
 
 var seed = app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Seed:Enabled");
 
-if (app.Environment.IsDevelopment() || seed)
+if (seed)
 {
     await using var scope = app.Services.CreateAsyncScope();
     var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
-
-    // Development only. In the cluster, schema changes belong to the migration Job.
-    if (app.Environment.IsDevelopment())
-        await db.MigrateWithRetryAsync(app.Logger);
-
-    if (seed)
-        await CatalogSeeder.SeedAsync(db, scope.ServiceProvider.GetRequiredService<TimeProvider>());
+    await CatalogSeeder.SeedAsync(db, scope.ServiceProvider.GetRequiredService<TimeProvider>());
 }
 
 app.Run();

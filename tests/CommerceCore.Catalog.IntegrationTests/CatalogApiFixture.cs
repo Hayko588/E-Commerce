@@ -33,6 +33,8 @@ public sealed class CatalogApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", connectionString);
         _broker.ExportSettings();
 
+        await DatabaseMigrator.MigrateAsync<CatalogDbContext>(connectionString);
+
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {

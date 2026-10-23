@@ -36,6 +36,8 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", connectionString);
         _broker.ExportSettings();
 
+        await DatabaseMigrator.MigrateAsync<OrderDbContext>(connectionString);
+
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {

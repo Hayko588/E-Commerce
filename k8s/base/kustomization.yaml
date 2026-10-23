@@ -30,6 +30,14 @@ configMapGenerator:
       disableNameSuffixHash: true
       labels:
         commerce.io/stage: dbinit
+  # - name: grafana-dashboards
+  #   files:
+  #     - dashboards.yaml=../../observability/dashboards-provisioning.yaml
+  #     - commerce-core.json=../../observability/dashboards/commerce-core.json
+  #   options:
+  #     disableNameSuffixHash: true
+  #     labels:
+  #       commerce.io/stage: observability
 
 patches:
   - target:

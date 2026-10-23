@@ -16,7 +16,12 @@ fi
 dir="k8s/overlays/$overlay"
 ns=commerce-core
 
-apply() { kubectl kustomize "$dir" | kubectl apply -f - -l "commerce.io/stage=$1"; }
+kubectl cluster-info >/dev/null 2>&1 || {
+  echo "The cluster is not reachable. Start it with: bash scripts/k3d-up.sh start" >&2
+  exit 1
+}
+
+apply() { kubectl kustomize --load-restrictor=LoadRestrictionsNone "$dir" | kubectl apply -f - -l "commerce.io/stage=$1"; }
 
 wait_for_jobs() {
   if ! kubectl -n "$ns" wait --for=condition=complete job -l "commerce.io/stage=$1" --timeout=600s; then

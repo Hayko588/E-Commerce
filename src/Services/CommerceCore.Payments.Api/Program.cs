@@ -24,6 +24,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks().AddDbContextCheck<PaymentsDbContext>("db", tags: ["db"]);
+
 builder.Services.AddCommerceTelemetry(builder.Configuration, "payments-api");
 
 var app = builder.Build();
@@ -39,13 +40,6 @@ app.UseExceptionHandler();
 app.MapControllers();
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("db") });
-
-if (app.Environment.IsDevelopment())
-{
-    await using var scope = app.Services.CreateAsyncScope();
-    var db = scope.ServiceProvider.GetRequiredService<PaymentsDbContext>();
-    await db.MigrateWithRetryAsync(app.Logger);
-}
 
 app.Run();
 
