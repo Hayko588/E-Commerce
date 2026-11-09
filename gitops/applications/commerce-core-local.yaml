@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: commerce-core-local
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io   # deleting the Application deletes what it deployed
+spec:
+  project: commerce-core
+  source:
+    repoURL: https://github.com/Hayko588/E-Commerce.git
+    targetRevision: main
+    path: k8s/overlays/local
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: commerce-core
+  syncPolicy:
+    automated:
+      prune: true      # remove what disappeared from Git
+      selfHeal: true   # undo manual changes in the cluster
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jqPathExpressions:
+        - .spec.template.metadata.annotations."kubectl.kubernetes.io/restartedAt"

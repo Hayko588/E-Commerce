@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ordering-api.yaml
+  - catalog-api.yaml
+  - payments-api.yaml
+  - notifications-api.yaml
+  - gateway.yaml
+  - ingress.yaml
+
+patches:
+  - target:
+      labelSelector: commerce.io/stage
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/sync-wave: "3"

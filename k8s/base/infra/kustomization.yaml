@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - config.yaml
+  - sqlserver.yaml
+  - rabbitmq.yaml
+  - networkpolicies.yaml
+
+configMapGenerator:
+  - name: sql-init-script
+    files:
+      - init-db.sql=files/init-db.sql
+    options:
+      disableNameSuffixHash: true
+      labels:
+        commerce.io/stage: infra
+
+patches:
+  - target:
+      labelSelector: commerce.io/stage
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/sync-wave: "0"

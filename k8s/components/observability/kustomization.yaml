@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - resources
+
+# The applications pick up the optional telemetry settings and carry the label the network policy needs.
+patches:
+  - target:
+      kind: Deployment
+      labelSelector: commerce.io/stage=apps
+    patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/commerce.io~1needs-otel
+        value: "true"
+      - op: add
+        path: /spec/template/spec/containers/0/envFrom/-
+        value:
+          configMapRef:
+            name: observability-config
+            optional: true

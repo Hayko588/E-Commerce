@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: commerce-core
+  namespace: argocd
+spec:
+  description: Commerce Core platform
+  sourceRepos:
+    - https://github.com/Hayko588/E-Commerce.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: commerce-core
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
